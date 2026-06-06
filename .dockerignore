@@ -1,0 +1,5 @@
+# Keep the Docker build context tiny: the image only needs the requirements files.
+# The project itself is bind-mounted at runtime (-v ~/argus:/home/vittal/argus).
+*
+!requirements-eval.txt
+!docker/requirements-sp-min.txt
