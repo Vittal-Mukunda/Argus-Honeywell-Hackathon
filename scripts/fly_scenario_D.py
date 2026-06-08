@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS :: fly_scenario_D.py  (Day-4, Scenario D "lights-off")
+"""ARGUS :: fly_scenario_D.py  (Scenario D "lights-off")
 
 Forward corridor flight that triggers a Zone-B BLACKOUT mid-traverse and is aware
 of the VIO health monitor's recovery signal -- the demonstration of Pillar 3.
@@ -213,7 +213,7 @@ def main():
     p.add_argument('--z0', type=float, default=1.0)
     # Holds default OFF: the kinematic drone does not drift off the centreline, and
     # continuous yaw/lateral correction rotates the stereo cameras enough to starve
-    # KLT (inliers collapse to ~5, VINS diverges -- the Day-3 rotation failure mode).
+    # KLT (inliers collapse to ~5, VINS diverges -- the rotation failure mode).
     # Pure forward translation keeps parallax clean (baseline_ABC: ~84 inliers).
     p.add_argument('--lat-kp', type=float, default=0.0)
     p.add_argument('--alt-kp', type=float, default=0.0)

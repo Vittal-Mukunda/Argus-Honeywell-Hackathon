@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS Day-6 :: occupancy_mapper -- temporal log-odds terrain fusion (Pillar 4).
+"""ARGUS occupancy_mapper -- temporal log-odds terrain fusion.
 
 The single-frame ``stereo_depth`` cloud is already WLS-filtered and outlier-gated,
 but any *single* frame still carries quantisation noise and the odd stereo blunder

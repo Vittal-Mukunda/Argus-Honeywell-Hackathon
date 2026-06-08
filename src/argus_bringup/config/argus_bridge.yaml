@@ -1,7 +1,7 @@
-# ARGUS Day-1 :: ROS <-> Gazebo (Harmonic) parameter_bridge config.
+# ARGUS ROS <-> Gazebo (Harmonic) parameter_bridge config.
 #   ros2 run ros_gz_bridge parameter_bridge --ros-args -p config_file:=<this>
 #
-# gz topics are emitted by model://argus_drone (Phase 4); their names already
+# gz topics are emitted by model://argus_drone; their names already
 # match the /argus/* ROS contract, so most entries are 1:1 pass-throughs.
 # Frozen-contract deviations applied at this layer:
 #   #2  /clock bridged to BOTH ros /clock (use_sim_time) and schema /argus/clock.
@@ -74,7 +74,7 @@
   gz_type_name: "gz.msgs.Twist"
   direction: ROS_TO_GZ
 
-# ---- 3D LiDAR (Day-6 Pillar 4, 10 Hz) -----------------------------------------
+# ---- 3D LiDAR (10 Hz) -----------------------------------------
 # gpu_lidar publishes a LaserScan on <topic> and a PointCloudPacked on
 # <topic>/points. The point cloud is the obstacle/mapping input; the scan is kept
 # for lightweight horizontal-ring consumers / RViz.

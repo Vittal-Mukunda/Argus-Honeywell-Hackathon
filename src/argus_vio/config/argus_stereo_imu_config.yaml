@@ -1,9 +1,8 @@
 %YAML:1.0
 
 #==============================================================================
-# ARGUS VINS-Fusion stereo-inertial config (Day 2 baseline).
+# ARGUS VINS-Fusion stereo-inertial config.
 # Matches the frozen ARGUS sim contract (cameras, IMU, frames, baseline).
-# Day-3 will TUNE the IMU noise / feature params; this is the running baseline.
 #==============================================================================
 
 #--- sensor set: 1 IMU + 2 cameras (stereo-inertial) ---
@@ -22,7 +21,7 @@ cam1_calib: "argus_cam1_pinhole.yaml"
 image_width: 1280
 image_height: 720
 
-#--- no GPU acceleration on the VINS path (SuperPoint front-end is Day 4) ---
+#--- no GPU acceleration on the VINS path ---
 use_gpu: 0
 use_gpu_acc_flow: 0
 use_gpu_ceres: 0
@@ -55,27 +54,27 @@ body_T_cam1: !!opencv-matrix
 # 0 = single-threaded synchronous processing -> DETERMINISTIC, reproducible offline
 # eval. With 1, the tracker/estimator threads race under bag replay and the init SFM
 # window sees a timing-dependent subset of frames -> non-deterministic init lottery on
-# the low-parallax corridor (same bag gave 0.73% one run, 33% another). Day-6: pinned 0.
+# the low-parallax corridor (same bag gave 0.73% one run, 33% another). Pinned 0.
 multiple_thread: 0
 
-#--- feature tracker (KLT baseline; SuperPoint swap is Day 4) ---
-max_cnt: 250            # Day-3: more features for init + low-texture (was 150)
-min_dist: 20            # Day-3: denser keypoints (was 30)
+#--- feature tracker ---
+max_cnt: 250
+min_dist: 20
 freq: 10                # tracking publish rate (Hz); >=10 for good estimation
 F_threshold: 1.0        # RANSAC F-matrix threshold (px)
 show_track: 1           # publish annotated tracking image (/argus/vio/image_track)
 flow_back: 1            # fwd-bwd optical flow check (improves match quality)
 
 #--- back-end optimization (real-time bounded) ---
-max_solver_time: 0.15   # Day-3: offline has compute budget (was 0.04)
-max_num_iterations: 15  # Day-3: converge harder offline (was 8)
-keyframe_parallax: 2.0  # Day-3: corridor features are far -> tiny motion parallax;
+max_solver_time: 0.15
+max_num_iterations: 15
+keyframe_parallax: 2.0  # corridor features are far -> tiny motion parallax;
                         # at 8.0 VINS made keyframes only ~0.32 Hz (every 3 s), which
                         # starved loop_fusion's DBoW DB (0 loop candidates) and under-
                         # constrained the back-end. 2.0 -> ~4x denser keyframes:
                         # populates the loop DB AND tightens odometry. (was 8.0 / 10.0)
 
-#--- IMU noise (Day-3 tune #2: robust EuRoC values) ---
+#--- IMU noise (robust EuRoC values) ---
 # Tune #1 lowered these ~5x (acc_n 4e-4): it won on the smooth straight run but
 # made the IMU factors knife-edge stiff -> Ceres NaN/Inf blowup on the multi-lap
 # turnarounds (velocity reversals). Reverted to robust EuRoC noise: numerically
@@ -91,7 +90,7 @@ g_norm: 9.8             # sim gravity (IMU reads az=+9.8; deviation: NOT 9.81)
 estimate_td: 0
 td: 0.0
 
-#--- loop closure (validated Day 6; off-path save disabled for now) ---
+#--- loop closure ---
 load_previous_pose_graph: 0
 pose_graph_save_path: "/home/vittal/argus/data/vio_output/pose_graph/"
 save_image: 0

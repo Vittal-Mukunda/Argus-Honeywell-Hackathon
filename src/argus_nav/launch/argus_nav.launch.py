@@ -1,7 +1,6 @@
-"""Launch the ARGUS Day-6 navigation pillar: dense stereo depth + reactive avoidance.
+"""Launch the ARGUS navigation pillar: dense stereo depth + reactive avoidance.
 
-Brings up the two ``argus_nav`` nodes side by side on top of a running Day-1
-sim/stack:
+Brings up the ``argus_nav`` nodes side by side on top of a running sim/stack:
 
   stereo_depth     -- /argus/cam{0,1}/image_raw -> /argus/depth/{image,points}
   reactive_avoider -- /argus/depth/points + /argus/lidar/points (+ VIO pose)
@@ -9,7 +8,7 @@ sim/stack:
   occupancy_mapper -- /argus/depth/points (+ VIO pose) -> /argus/map/points
                       (log-odds temporal fusion: clean, dynamic terrain map)
 
-Consumes only public Day-1 contract topics (+ the additive /argus/lidar/* sensor)
+Consumes only public contract topics (+ the additive /argus/lidar/* sensor)
 and publishes the additive /argus/depth/*, /argus/map/* and /argus/nav/* topics
 (see docs/CONTRACT.md sec 8). Nothing here remaps or changes a frozen interface.
 

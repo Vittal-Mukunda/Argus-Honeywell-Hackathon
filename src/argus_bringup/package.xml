@@ -3,7 +3,7 @@
 <package format="3">
   <name>argus_bringup</name>
   <version>0.1.0</version>
-  <description>ARGUS Day-1 ROS&lt;-&gt;Gazebo (Harmonic) bringup: parameter_bridge config and the cam1 camera_info baseline patch node.</description>
+  <description>ARGUS ROS&lt;-&gt;Gazebo (Harmonic) bringup: parameter_bridge config and the cam1 camera_info baseline patch node.</description>
   <maintainer email="vittal.muku@gmail.com">vittal</maintainer>
   <license>Apache-2.0</license>
 

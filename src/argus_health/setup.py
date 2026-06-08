@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer='vittal',
     maintainer_email='vittal.muku@gmail.com',
-    description='ARGUS VIO health monitor + recovery (Pillar 3, Day 4).',
+    description='ARGUS VIO health monitor + recovery.',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

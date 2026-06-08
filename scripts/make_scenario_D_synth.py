@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""ARGUS Day-4 :: make_scenario_D_synth.py
+"""ARGUS make_scenario_D_synth.py
 
 Synthesize the Scenario D ("lights-off") sensor bag by DARKENING the stereo stream
 of a known-good lit forward-flight bag (baseline_ABC) over the Zone-B window. The
 physical effect on the estimator is identical to a gz light blackout -- the cameras
 go dark, KLT/feature tracking starves, VINS degrades -- so the health monitor's
 detection of the lights-out failure is demonstrated deterministically, without
-depending on the live ogre2 render (which regressed mid-Day-4: headless renders
-unlit frames). The full live gz-blackout path (blackout.sh + run_scenario_D.sh)
-remains in the tree for when the render works.
+depending on the live ogre2 render. The full live gz-blackout path
+(blackout.sh + run_scenario_D.sh) remains in the tree for when the render works.
 
 Only the cam0/cam1 image payloads inside the window are modified (multiplied by a
 small factor); IMU / ground truth / clock / camera_info pass through untouched, so

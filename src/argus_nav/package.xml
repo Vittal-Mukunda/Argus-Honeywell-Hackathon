@@ -4,8 +4,8 @@
   <name>argus_nav</name>
   <version>0.6.0</version>
   <description>
-    ARGUS Day-6 navigation pillar: dense stereo perception + reactive obstacle
-    avoidance, built additively on the frozen Day-1 contract. The stereo_depth
+    ARGUS navigation pillar: dense stereo perception + reactive obstacle
+    avoidance, built additively on the frozen contract. The stereo_depth
     node turns the existing cam0/cam1 pair into a dense depth image and an
     outlier-filtered 3D point cloud (block-matching disparity -> reprojection ->
     statistical outlier removal). The reactive_avoider node consumes that cloud
@@ -13,7 +13,7 @@
     corridor with a potential-field planner (goal attraction + obstacle
     repulsion -> /argus/cmd_vel), so the drone navigates the enriched world and
     weaves around in-path obstacles without a scripted path. Consumes only the
-    public Day-1 topics and adds new /argus/depth/* and /argus/nav/* topics; it
+    public contract topics and adds new /argus/depth/* and /argus/nav/* topics; it
     does not change any frozen interface.
   </description>
   <maintainer email="vittal.muku@gmail.com">vittal</maintainer>

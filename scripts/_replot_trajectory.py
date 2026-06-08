@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Re-render trajectory.png from saved gt.tum/vio.tum with AUTO aspect.
 
-Day-3 audit fix: evo's traj plot forces set_aspect("equal"); on the near-straight
+evo's traj plot forces set_aspect("equal"); on the near-straight
 Scenario A/B runs (y/z ~= const) that squished the path to an invisible sliver.
 This reads the already-aligned trajectories saved next to metrics.json and re-draws
 ONLY trajectory.png (metrics.json untouched), so the documented numbers are preserved.

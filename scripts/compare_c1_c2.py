@@ -11,9 +11,9 @@ run_day5_evals.sh (C2_superpoint), 1:1 per scenario (identical slices), and emit
 
 Run with the eval venv:  ~/.venvs/argus-eval/bin/python scripts/compare_c1_c2.py
 
-NOTE (Day-3 blank-plot lesson): we plot manually with set_aspect('auto') +
-autoscale; evo's traj_colormap forces equal aspect, which collapsed the
-near-straight A/B paths to an invisible sliver.
+NOTE: we plot manually with set_aspect('auto') + autoscale; evo's traj_colormap
+forces equal aspect, which collapsed the near-straight A/B paths to an invisible
+sliver.
 """
 import json
 import os
@@ -100,7 +100,7 @@ def main():
             ax.set_title(f"ARGUS {label}: C1 vs C2 trajectory")
             ax.set_xlabel("x [m]")
             ax.set_ylabel("y [m]")
-            ax.set_aspect("auto")          # Day-3 lesson: never 'equal' on straight paths
+            ax.set_aspect("auto")
             ax.autoscale(enable=True)
             ax.grid(True, alpha=0.3)
             ax.legend(loc="best", fontsize=8)

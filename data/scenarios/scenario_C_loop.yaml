@@ -1,6 +1,5 @@
 # ARGUS Scenario C — closed loop (loop-closure validation)
-# Master plan §8 Day-3 acceptance #2: a loop closure fires on the return and
-# visibly corrects drift.
+# A loop closure fires on the return and visibly corrects drift.
 #
 # IMPLEMENTED AS A NO-YAW FORWARD/BACK SHUTTLE (fly_shuttle.py), not a U-turn loop.
 # Rationale: in-place 180-deg yaw U-turns DIVERGE VINS-Fusion (pure rotation gives
@@ -17,7 +16,7 @@ description: >
   leg the drone re-observes earlier keyframes from the same viewpoint; loop_fusion
   should detect + accept a loop and run 4-DoF pose-graph correction.
 
-world: warehouse_corridor          # stock Day-1 world
+world: warehouse_corridor
 start_pose: [1.5, 0.0, 1.0]
 heading: +x                        # held at 0 deg the entire flight (no yaw)
 motion:

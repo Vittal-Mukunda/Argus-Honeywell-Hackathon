@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS Day-1 :: cam1 (right) CameraInfo baseline patch.
+"""ARGUS cam1 (right) CameraInfo baseline patch.
 
 Frozen-contract deviation #3: Gazebo emits two independent cameras and does NOT
 encode the stereo baseline, so the bridged CameraInfo for the right camera has

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""ARGUS Day-1 :: acceptance -- the formal Phase-9 acceptance suite.
+"""ARGUS acceptance suite.
 
-Scores the Day-1 simulation foundation against a fixed checklist and measures
+Scores the simulation foundation against a fixed checklist and measures
 the true real-time factor (RTF) under the full warehouse world with both 720p
-stereo cameras and the IMU rendering. This is the authoritative "is Day-1 done?"
-gate; the lighter ``check_stack`` is only a day-to-day probe.
+stereo cameras and the IMU rendering. The lighter ``check_stack`` is a
+day-to-day probe.
 
 Two modes:
 
@@ -96,7 +96,7 @@ class Scorecard:
 
     def render(self):
         green, red, yellow, reset = '\033[32m', '\033[31m', '\033[33m', '\033[0m'
-        print('\n============ ARGUS Day-1 ACCEPTANCE SCORECARD ============')
+        print('\n============ ARGUS ACCEPTANCE SCORECARD ============')
         for r in self.results:
             if r.passed is None:
                 tag = f'{yellow}[ SKIP ]{reset}'
@@ -406,7 +406,7 @@ def teardown(proc):
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(description='ARGUS Day-1 formal acceptance suite.')
+    p = argparse.ArgumentParser(description='ARGUS formal acceptance suite.')
     p.add_argument('--full', action='store_true',
                    help='Build, launch headless, score everything, record a bag, tear down.')
     p.add_argument('--world', default=WORLD_FRAME, help='World name.')

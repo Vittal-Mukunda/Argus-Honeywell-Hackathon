@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""ARGUS Day-3 :: superpoint_node.py
+"""ARGUS superpoint_node.py
 
 Standalone learned-feature front-end. Runs the SuperPoint ONNX extractor on the
 RTX 4050 (ONNX Runtime CUDA EP), subscribes to a camera image and publishes:
 
   * /argus/vio/keypoints      sensor_msgs/PointCloud2  -- detected keypoints as
-                              (u, v, score) points in the cam0 optical frame
-                              (schema topic; Day-4 VINS integration consumes it).
+                              (u, v, score) points in the cam0 optical frame.
   * /argus/superpoint/overlay sensor_msgs/Image        -- the input frame with
                               keypoints drawn (score-coloured), for RViz / rqt
                               visual confirmation that learned features survive
                               the low-texture Zone-B walls where KLT starves.
 
-This node is NOT integrated with VINS-Fusion (that is Day-4). It runs alongside
-to validate the extractor at >= 15 Hz with 1024 max keypoints on the dGPU.
+Validates the extractor at >= 15 Hz with 1024 max keypoints on the dGPU.
 
 Run with the SuperPoint venv interpreter and ROS sourced (see run_superpoint.sh):
     source /opt/ros/humble/setup.bash && source ~/argus/install/setup.bash

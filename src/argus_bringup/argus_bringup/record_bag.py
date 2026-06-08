@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS Day-1 :: record_bag helper.
+"""ARGUS record_bag helper.
 
 Thin wrapper around ``ros2 bag record`` that captures the frozen ``/argus/*``
 contract topics (plus ``/clock``) into a timestamped bag, giving the downstream

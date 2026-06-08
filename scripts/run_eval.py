@@ -121,7 +121,7 @@ def _gauge_align_yaw_translation(
     onto `ref` in the horizontal plane (2D Kabsch -- well-defined even for
     collinear points). Roll/pitch and metric scale are left untouched because
     they ARE observable (gravity from the IMU, scale from stereo). This is the
-    honest gauge removal; Day-2's origin-only fallback left yaw uncorrected and
+    honest gauge removal; the origin-only fallback left yaw uncorrected and
     inflated ATE roughly linearly with distance.
 
     Returns a 4x4 SE(3) transform mapping `est` poses into the `ref` frame.
@@ -193,7 +193,7 @@ def evaluate(
     except GeometryException:
         # Collinear (straight-line) trajectory: full Umeyama rotation is
         # rank-deficient. Remove only the 4 unobservable gauge DOF (translation
-        # + yaw); see _gauge_align_yaw_translation. This replaces Day-2's
+        # + yaw); see _gauge_align_yaw_translation. This replaces the
         # origin-only fallback, which left the heading gauge uncorrected.
         transform = _gauge_align_yaw_translation(ref_sync, est_sync)
         est_aligned = copy.deepcopy(est_sync)

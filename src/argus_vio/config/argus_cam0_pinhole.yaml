@@ -1,7 +1,7 @@
 %YAML:1.0
 ---
 # ARGUS cam0 = LEFT = stereo reference (CameraInfo.P[3]=0 per frozen contract).
-# Intrinsics verified in Day-1 acceptance pt4: 1280x720, fx=fy=640, cx=640, cy=360,
+# Intrinsics: 1280x720, fx=fy=640, cx=640, cy=360,
 # zero distortion, rectified. Source: argus_drone model.sdf (90 deg HFoV).
 model_type: PINHOLE
 camera_name: cam0

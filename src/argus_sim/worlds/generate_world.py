@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ARGUS :: generate_world.py — emit the enriched warehouse_corridor.sdf.
 
-The hand-tuned Day-1 contract values (corridor 30x5x3 m, dartsim 250 Hz, the gz
+The contract values (corridor 30x5x3 m, dartsim 250 Hz, the gz
 system plugins, the six SLALOM obstacles, the Zone-B `light_b_flicker` fixture,
 the `detail.png` PBR texture) are reproduced EXACTLY -- the reactive avoider is
 tuned and verified against those obstacle poses, so they must not move. On top of
@@ -187,7 +187,7 @@ def build():
                          rpy="0 1.5708 0", collision=False))
 
     # ======================= SLALOM OBSTACLES (frozen poses) =======================
-    # Positions/sizes are EXACTLY the verified Day-6 layout; only materials upgraded.
+    # Positions/sizes are EXACTLY the verified layout; only materials upgraded.
     PALLET = mat("0.30 0.20 0.10 1", "0.52 0.36 0.18 1", rough=0.95)        # wood
     PILLAR = mat("0.33 0.34 0.37 1", "0.48 0.49 0.53 1", "0.3 0.3 0.3 1", rough=0.4, metal=0.6)
     SHELF  = mat("0.20 0.22 0.26 1", "0.32 0.35 0.42 1", "0.4 0.4 0.45 1", rough=0.4, metal=0.5)
@@ -242,7 +242,7 @@ def build():
   Physics: dartsim @ 250 Hz (no ODE engine in gz-harmonic; dart is the default).
 
   Hand-edit generate_world.py, NOT this file. The six obs_* slalom obstacles keep
-  their verified Day-6 poses; the racking / forklift / pipes / floor markings are
+  their verified poses; the racking / forklift / pipes / floor markings are
   scenery kept clear of the |y|<=1.0 m flight lane (walls >= |y|=2.0; pipes z>2.0).
 -->
 <sdf version="1.10">

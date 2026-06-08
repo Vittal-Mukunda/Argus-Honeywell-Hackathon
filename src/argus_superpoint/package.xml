@@ -4,12 +4,12 @@
   <name>argus_superpoint</name>
   <version>0.3.0</version>
   <description>
-    ARGUS Day-3 learned-feature front-end (standalone). Runs SuperPoint (and
+    ARGUS learned-feature front-end (standalone). Runs SuperPoint (and
     optionally SuperPoint+LightGlue) via ONNX Runtime on the RTX 4050, subscribes
     to /argus/cam0/image_raw, and publishes keypoints on /argus/vio/keypoints
-    (sensor_msgs/PointCloud2) plus an annotated overlay image for RViz. NOT yet
-    integrated with VINS-Fusion (Day-4 work) -- it runs alongside to prove learned
-    features survive the low-texture Zone-B walls where Shi-Tomasi/KLT starve.
+    (sensor_msgs/PointCloud2) plus an annotated overlay image for RViz. Proves
+    learned features survive the low-texture Zone-B walls where Shi-Tomasi/KLT
+    starve.
   </description>
   <maintainer email="vittal.muku@gmail.com">vittal</maintainer>
   <license>MIT</license>

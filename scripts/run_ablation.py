@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS ablation harness (Day-2 skeleton).
+"""ARGUS ablation harness.
 
 Master plan section 9 defines the ablation grid:
 
@@ -85,9 +85,9 @@ class Cell:
 def _run_cell(config: Config, scenario: str, out_root: Path) -> Cell:
     """Run one matrix cell end-to-end. STUB until variants/scenarios exist.
 
-    Day 3+ implementation: launch the sim on ``scenario`` with the front-end /
-    recovery / planner selected by ``config``, record a bag, then call
-    ``run_eval.py`` and load the resulting metrics.json.
+    Launch the sim on ``scenario`` with the front-end / recovery / planner
+    selected by ``config``, record a bag, then call ``run_eval.py`` and load
+    the resulting metrics.json.
     """
     raise NotImplementedError(
         f"matrix runner not wired yet for {config.name} x {scenario} "

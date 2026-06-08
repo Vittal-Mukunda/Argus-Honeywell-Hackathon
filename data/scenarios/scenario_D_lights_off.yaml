@@ -1,6 +1,6 @@
-# ARGUS Scenario D — "lights-off" (Pillar 3 health-monitor validation)
-# Master plan Day-4: prove the VIO health monitor detects a VIO failure when the
-# Zone-B lights go out, and that recovery engages.
+# ARGUS Scenario D — "lights-off" (health-monitor validation)
+# Proves the VIO health monitor detects a VIO failure when the Zone-B lights go
+# out, and that recovery engages.
 #
 # A forward traverse through zones A->B->C. Partway through Zone B the corridor
 # lights are killed: the stereo cameras go dark, feature tracking starves, VINS
@@ -29,7 +29,7 @@ blackout:
   #  - SYNTHETIC (used for the evaluable artifact): darken the cam0/cam1 payloads
   #          of the known-good lit baseline_ABC bag over the window
   #          (scripts/make_scenario_D_synth.py). Deterministic; independent of the
-  #          live ogre2 render (which regressed to unlit frames during Day-4).
+  #          live ogre2 render (which can regress to unlit frames).
   method: synthetic_darkening
   factor: 0.03
 

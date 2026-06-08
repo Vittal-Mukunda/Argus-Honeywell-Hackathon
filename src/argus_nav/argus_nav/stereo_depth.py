@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""ARGUS Day-6 :: stereo_depth -- dense stereo perception (Pillar 4).
+"""ARGUS stereo_depth -- dense stereo perception.
 
-Turns the *existing* Day-1 stereo pair (``/argus/cam0/image_raw`` left +
+Turns the stereo pair (``/argus/cam0/image_raw`` left +
 ``/argus/cam1/image_raw`` right, baseline 0.12 m) into a **dense** depth image
-and an **outlier-filtered** 3D point cloud. This is the "binocular vision /
-stereoscopy for accurate depth" capability: the Day-1..5 stack only ever used
-*sparse* VINS feature points; here we recover a per-pixel disparity and a metric
-cloud the planner can treat as a live obstacle field.
+and an **outlier-filtered** 3D point cloud. Recovers a per-pixel disparity and
+a metric cloud the planner can treat as a live obstacle field.
 
 Pipeline (one stereo frame):
 

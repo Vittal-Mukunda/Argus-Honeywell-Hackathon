@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS Day-4 :: analyze_scenario_D.py
+"""ARGUS analyze_scenario_D.py
 
 Analyze the Scenario D ("lights-off") ablation: C1 (recovery OFF, flies blind) vs
 C3 (recovery ON, holds during the blackout). Reads each run's recorded bag

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS Day-4 :: build_dashboard.py
+"""ARGUS build_dashboard.py
 
 Generate a SELF-CONTAINED HTML dashboard for the ARGUS VIO health monitor (Pillar
 3) -- no server, no install, no CDN. All charts are matplotlib figures embedded as
@@ -144,7 +144,7 @@ def main() -> int:
  .foot{{color:var(--mut);font-size:12px;margin-top:30px}}
 </style></head><body>
 <header><h1>ARGUS — Robust VIO Health Monitor</h1>
-<div class=sub>Pillar 3 · Day 4 · GPS-denied stereo-inertial VIO with failure detection &amp; recovery</div></header>
+<div class=sub>GPS-denied stereo-inertial VIO with failure detection &amp; recovery</div></header>
 <main>
  <h2>Key metrics</h2><div class=grid>{cards}</div>
 

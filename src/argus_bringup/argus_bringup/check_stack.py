@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ARGUS Day-1 :: check_stack helper.
+"""ARGUS check_stack helper.
 
 Quick interactive health probe for a running stack: confirms the frozen
 ``/argus/*`` contract topics are present and flowing, that the cam1 baseline
@@ -7,10 +7,10 @@ patch is live (right ``CameraInfo.P[3] = -76.8``, deviation #3), that the left
 camera is the unshifted reference (``P[3] = 0``), that ground truth and the sim
 clock are alive, and prints the observed wall rates.
 
-This is the lightweight day-to-day "is the stack up?" check. It is NOT the
-formal Phase-9 acceptance suite (which scores the 10 points and measures true
-RTF under the full world). Rates here are WALL-clock and informational: under
-sim RTF < 1 (known iGPU load) they read low without anything being wrong.
+This is the lightweight "is the stack up?" check. It is NOT the formal
+acceptance suite (which scores the 10 points and measures true RTF under the
+full world). Rates here are WALL-clock and informational: under sim RTF < 1
+(known iGPU load) they read low without anything being wrong.
 
 Run (with the stack already up)::
 
@@ -146,8 +146,7 @@ def main(argv=None):
         ok_all &= ok
         print(f'{_tag(ok)} {label}: {n} msgs  (~{n / win:.1f} Hz wall, informational)')
 
-    print('\n[check_stack] NOTE: wall rates read low under sim RTF<1 (iGPU); '
-          'true RTF is measured in Phase 9.')
+    print('\n[check_stack] NOTE: wall rates read low under sim RTF<1 (iGPU).')
     print(f'[check_stack] {"ALL CHECKS PASSED" if ok_all else "SOME CHECKS FAILED"}')
 
     node.destroy_node()

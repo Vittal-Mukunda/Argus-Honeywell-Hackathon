@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""ARGUS Day-6 :: reactive_avoider -- reactive obstacle avoidance (Pillar 4).
+"""ARGUS reactive_avoider -- reactive obstacle avoidance.
 
-Closes the loop the Day-1..5 stack never had: instead of flying a *scripted*
+Closes the sense-and-avoid loop: instead of flying a *scripted*
 ``cmd_vel`` path (drive_drone / fly_shuttle), the drone now **senses obstacles
 live and steers around them**. It fuses the dense, outlier-filtered stereo
 obstacle cloud from ``stereo_depth`` (``/argus/depth/points``) with the onboard

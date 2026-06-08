@@ -23,7 +23,7 @@ setup(
     zip_safe=True,
     maintainer='vittal',
     maintainer_email='vittal.muku@gmail.com',
-    description='ARGUS Day-1 ROS<->gz bringup: parameter_bridge config + camera_info baseline patch.',
+    description='ARGUS ROS<->gz bringup: parameter_bridge config + camera_info baseline patch.',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={

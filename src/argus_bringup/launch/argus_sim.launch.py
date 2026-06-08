@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""ARGUS Day-1 :: top-level bringup launch.
+"""ARGUS top-level bringup launch.
 
-Co-starts the full Day-1 simulation stack as one shot:
+Co-starts the full simulation stack as one shot:
 
-  1. Gazebo Harmonic running the ``warehouse_corridor`` world (Phase 3).
-  2. The kinematic stereo/IMU ``argus_drone`` (Phase 4) spawned at the frozen
+  1. Gazebo Harmonic running the ``warehouse_corridor`` world.
+  2. The kinematic stereo/IMU ``argus_drone`` spawned at the frozen
      start pose (1.5, 0, 1.0).
-  3. ``ros_gz_bridge parameter_bridge`` driven by ``argus_bridge.yaml`` (Phase 5).
-  4. The ``camera_info_patch`` node (Phase 5) that fixes the right-camera
+  3. ``ros_gz_bridge parameter_bridge`` driven by ``argus_bridge.yaml``.
+  4. The ``camera_info_patch`` node that fixes the right-camera
      projection term (deviation #3).
 
 Both the bridge AND the patch are started here on purpose: without the patch the
@@ -99,7 +99,7 @@ def launch_setup(context, *args, **kwargs):
         )],
     )
 
-    # ROS <-> gz bridge (Phase 5 config). use_sim_time keeps it on the sim clock.
+    # ROS <-> gz bridge. use_sim_time keeps it on the sim clock.
     bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',

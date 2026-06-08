@@ -1,11 +1,10 @@
 # ARGUS Scenario B — "hard" low-texture corridor (the SuperPoint payoff)
 # Same straight path as Scenario A, but Zone B [10,20] walls are blanked to a
 # low-texture material so the KLT corner tracker starves. This is the scenario
-# where the Day-4 SuperPoint front-end is expected to win (>= 20% drift cut vs KLT).
+# where the SuperPoint front-end is expected to win (>= 20% drift cut vs KLT).
 #
-# STATUS: spec only. The blank-wall world variant + sensor bag are built in
-# Track 2 / Day 4 (needs a warehouse_corridor_blankB world). Defined here now so
-# the scenario contract is frozen.
+# STATUS: spec only. The blank-wall world variant + sensor bag need a
+# warehouse_corridor_blankB world. Defined here so the scenario contract is frozen.
 
 name: B_hard
 description: >
@@ -32,5 +31,5 @@ eval:
 
 acceptance:
   # Baseline (KLT): expected HIGHER drift than A (feature starvation in Zone B).
-  # Day-4 SuperPoint target: >= 20% drift reduction vs the KLT run on this scenario.
+  # SuperPoint target: >= 20% drift reduction vs the KLT run on this scenario.
   superpoint_drift_reduction_pct_min: 20

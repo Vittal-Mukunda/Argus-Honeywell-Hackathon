@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""ARGUS Day-1 :: drive_drone helper.
+"""ARGUS drive_drone helper.
 
 Convenience driver that publishes ``geometry_msgs/Twist`` on ``/argus/cmd_vel``
-(the ROS->gz VelocityControl input, Phase 5/the frozen bridge contract) so the
+(the ROS->gz VelocityControl input per the frozen bridge contract) so the
 kinematic drone can be flown without a teleop dependency. Useful for demoing the
 sim and for handing motion to the downstream VIO pillar.
 

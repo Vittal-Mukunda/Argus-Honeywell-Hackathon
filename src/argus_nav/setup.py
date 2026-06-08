@@ -19,7 +19,7 @@ setup(
     zip_safe=True,
     maintainer='vittal',
     maintainer_email='vittal.muku@gmail.com',
-    description='ARGUS dense stereo perception + reactive obstacle avoidance (Pillar 4, Day 6).',
+    description='ARGUS dense stereo perception + reactive obstacle avoidance.',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

@@ -8,7 +8,7 @@ field is derived from observable topics, which is the honest contract an externa
 health monitor lives under (VINS-Fusion does not publish feature counts,
 parallax, or pose covariance as topics).
 
-Signal sources (all remapped onto the frozen Day-1/2 schema):
+Signal sources (all remapped onto the frozen schema):
 
   * ``/argus/vio/point_cloud``  (sensor_msgs/PointCloud) -- the sliding-window
     triangulated inlier landmarks. ``len(points)`` is the best observable proxy
@@ -43,7 +43,7 @@ Derived health fields and how each is obtained:
       Rate of growth of the IMU-vs-optimized position divergence (m/s), smoothed.
       ~0 when healthy, climbs the moment the estimator loses the cameras.
   imu_excitation_ok
-      For the Day-1 *noise-free* kinematic IMU, translational speed is the
+      For the *noise-free* kinematic IMU, translational speed is the
       practical excitation/parallax signal (a constant-velocity cruise reads zero
       accel/gyro variance yet still gives parallax). So excitation is
       speed > speed_min OR gyro/accel variance above threshold (the latter is the

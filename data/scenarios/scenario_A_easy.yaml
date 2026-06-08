@@ -1,27 +1,26 @@
 # ARGUS Scenario A — "easy" textured corridor (the drift GATE)
-# Master plan §8 Day-3 acceptance #1: drift < 1.5% over distance (Honeywell spec).
+# Drift target: < 1.5% over distance (Honeywell spec).
 #
-# Geometry note: the master plan says "20m through Zone A", but Zone A is only
-# 10m wide in the 30m corridor. We define A as a straight forward flight through
-# the full textured corridor (zones A->B->C), which is textured throughout and
-# gives ~23.5m of distance for a meaningful drift%. This REUSES the Day-2
-# baseline sensor bag, so tuning starts immediately with no new sim run.
+# Geometry note: Zone A is only 10m wide in the 30m corridor. We define A as a
+# straight forward flight through the full textured corridor (zones A->B->C),
+# which is textured throughout and gives ~23.5m of distance for a meaningful
+# drift%. Reuses the baseline sensor bag.
 
 name: A_easy
 description: >
   Straight constant-velocity forward flight through the textured warehouse
   corridor (zones A->B->C). This is the primary drift-target validation run.
 
-world: warehouse_corridor          # stock Day-1 world (textured throughout)
+world: warehouse_corridor
 start_pose: [1.5, 0.0, 1.0]        # x,y,z (m), ENU; drone spawn
 heading: +x
 motion:
   type: straight
-  cmd_vel: [0.5, 0.0, 0.0]         # m/s forward (matches Day-2 baseline)
+  cmd_vel: [0.5, 0.0, 0.0]         # m/s forward
   stop_x: 25.0                     # fly until x ~= 25 m
   distance_m: 23.5                 # approx path length
 
-# Data source: the Day-2 baseline sensor bag IS Scenario A (full straight run).
+# Data source: the baseline sensor bag IS Scenario A (full straight run).
 sensor_bag: data/bags/baseline_ABC
 vio_eval_bag: data/bags/vio_eval
 

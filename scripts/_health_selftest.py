@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Standalone state-machine self-test for the ARGUS health monitor (Day 4).
+"""Standalone state-machine self-test for the ARGUS health monitor.
 
 Runs the real ``HealthMonitor`` node in-process against a synthetic driver that
 scripts a healthy -> lights-off -> recovered timeline, with NO simulator. Cheap
