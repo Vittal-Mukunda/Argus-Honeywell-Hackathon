@@ -114,7 +114,7 @@ argus_msgs/UncertaintyMap
   <img src="docs/media/gazebo.gif" alt="Gazebo Warehouse Simulation" width="680"/>
 </p>
 
-<p align="center"><em>Fig. 2 — Gazebo Harmonic simulation showing the ARGUS drone traversing the warehouse corridor. The drone is equipped with a stereo camera pair (0.12 m baseline), a 250 Hz IMU, 3D LiDAR, and a downward rangefinder.</em></p>
+<p align="center"><em>Fig. 2 — Gazebo Harmonic simulation showing the ARGUS drone autonomously traversing the obstacle-laden warehouse corridor (chase view). The drone is equipped with a stereo camera pair (0.12 m baseline), a 250 Hz IMU, 3D LiDAR, and a downward rangefinder.</em></p>
 
 ### 3.1 Environment Specifications
 
@@ -164,7 +164,7 @@ The warehouse corridor is divided into three functional zones for systematic eva
   <img src="docs/media/onboard_camera.gif" alt="Onboard VIO Feature Tracking" width="680"/>
 </p>
 
-<p align="center"><em>Fig. 3 — Real-time VIO feature tracking and trajectory estimation. Left: onboard camera view with tracked features (green = long-lived, yellow = medium, red = new). Right: estimated trajectory vs ground truth with live drift readout.</em></p>
+<p align="center"><em>Fig. 3 — Real-time VIO feature tracking on the onboard stereo pair. The left and right camera images are shown side by side with detected keypoints overlaid and matched across the stereo baseline, feeding the tightly-coupled stereo-inertial estimator.</em></p>
 
 ### 4.1 VINS-Fusion Stereo-Inertial Odometry
 
@@ -292,7 +292,7 @@ Timeline (wall seconds):
   <img src="docs/media/rviz.gif" alt="RViz 3D Map Visualization" width="680"/>
 </p>
 
-<p align="center"><em>Fig. 4 — RViz visualization showing progressive 3D map construction via log-odds voxel fusion as the drone traverses the corridor. Point cloud coloured by height (rainbow height map), with ground truth (gray) and VIO (green) trajectories overlaid.</em></p>
+<p align="center"><em>Fig. 4 — RViz visualization of the autonomous sense-and-avoid run: the log-odds occupancy voxel map of the warehouse, built live from fused stereo-depth + 3D-LiDAR as the drone flies the corridor, with the GPS-free flight trajectory (green) overlaid.</em></p>
 
 ### 6.1 Stereo Depth Perception
 
@@ -653,7 +653,7 @@ argus/
 │   └── demo.sh
 └── docs/
     ├── figures/              # Publication-quality figures
-    └── media/                # Demo GIFs (60 fps)
+    └── media/                # Demo GIFs (live docker/demo.sh --avoid capture)
 ```
 
 ---
