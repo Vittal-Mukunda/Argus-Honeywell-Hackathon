@@ -3,12 +3,18 @@ build/
 install/
 log/
 
-# ── vendored upstream (cloned separately; symlinked into src/) ───────────────
-# VINS-Fusion-ROS2 + its DBoW vocabulary live here; see docs/CONTRACT.md.
-third_party/
+# ── vendored upstream ─────────────────────────────────────────────────────────
+# third_party/VINS-Fusion-ROS2 (incl. local QoS + SuperPoint patches and the
+# DBoW vocabulary) is COMMITTED so a fresh clone builds; see docs/CONTRACT.md.
 
 # ── generated evaluation artifacts (run scripts/run_eval.py to regenerate) ───
 data/eval/
+
+# ── recorded rosbags + crash dumps (regenerable, large) ──────────────────────
+data/bags/
+/bags/
+core
+core.*
 
 # ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
