@@ -43,11 +43,16 @@ if ! kill -0 "$VINS_PID" 2>/dev/null; then
   exit 1
 fi
 
+# Eval-critical topics ONLY. The cumulative Path topics (/argus/vio/path,
+# base_path, loop_closures) grow QUADRATICALLY in total bytes; a reliable
+# subscriber (recorder or RViz) forces the DDS writer inside vins_node to
+# retain them -> 8 GB anon RSS and a kernel OOM kill on long bags (day-7;
+# day-5 hit the same wall on the recorder side). run_eval.py reads message
+# header stamps, so /clock is not needed either.
 echo "[loop] recording GT + raw + loop-corrected odom -> $EVAL_BAG"
 ros2 bag record -s sqlite3 -o "$EVAL_BAG" \
-  /argus/ground_truth/pose /argus/vio/odom /argus/vio/odom_optimized \
-  /argus/vio/odom_loop /argus/vio/loop_closures /argus/vio/base_path \
-  /argus/vio/path /clock >>"$LOG" 2>&1 &
+  /argus/ground_truth/pose /argus/vio/odom_optimized \
+  /argus/vio/odom_loop >>"$LOG" 2>&1 &
 REC_PID=$!
 sleep 2
 

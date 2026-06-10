@@ -47,10 +47,13 @@ if ! kill -0 "$VINS_PID" 2>/dev/null; then
   exit 1
 fi
 
+# No cumulative /argus/vio/path (quadratic growth -> DDS writer retention
+# inside vins_node -> OOM on long bags; day-7) and no /clock (run_eval.py
+# reads header stamps).
 echo "[vio] recording GT + VIO odom -> $EVAL_BAG"
 ros2 bag record -s sqlite3 -o "$EVAL_BAG" \
   /argus/ground_truth/pose /argus/vio/odom /argus/vio/odom_optimized \
-  /argus/vio/path /clock >>"$LOG" 2>&1 &
+  >>"$LOG" 2>&1 &
 REC_PID=$!
 sleep 2
 
