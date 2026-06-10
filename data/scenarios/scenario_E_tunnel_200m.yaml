@@ -11,8 +11,9 @@
 #   * arch ribs every ~10 m -> near-field parallax for stereo triangulation
 #   * end-caps flown at wz = v/R = 0.08 rad/s WHILE translating -> yaw with
 #     parallax (never an in-place turn, which diverges VINS)
-#   * 6 s smooth vertical-sinusoid preamble -> gravity/accel-bias observability
-#     at init (the Day-6 Z-ramp killer), C1-continuous, no sharp reversals
+#   * plain step-start init (the corridor-proven regime). A smooth vertical-
+#     sinusoid preamble was tried and is a DOCUMENTED NEGATIVE (day-7 log):
+#     vertical velocity zero-crossings during init corrupt the gravity init.
 
 name: E_tunnel_200m
 description: >
@@ -27,7 +28,7 @@ motion:
   type: circuit
   speed: 0.8                       # m/s cruise (project envelope max)
   laps: 1
-  excite_preamble_s: 6.0           # smooth vertical sinusoid, 3 periods
+  init: step-start                 # plain step start; --excite is a documented negative
   distance_m: 206.8                # perimeter + overrun
 
 sensor_bag: data/bags/scenario_E_tunnel

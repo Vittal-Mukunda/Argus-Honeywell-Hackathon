@@ -90,11 +90,32 @@ Live flight matched: e = 0.00 m at lap end, z hold 1.000 m, 206.8 m flown.
 stereo @ 15 Hz + 250 Hz IMU + GT). Offline replay `run_vio_loop_offline.sh`
 at RATE 0.15 (the proven deterministic envelope for mt0).
 
-## 5. Results — (filled in after the eval pass)
+## 5. ❌ Excitation preamble — failed experiment (iteration 1)
+
+The 6 s smooth vertical-sinusoid preamble **corrupted VINS init outright**: the
+first published pose was already ~12 km from the origin, with a wrong world
+tilt that integrated a runaway fictitious acceleration (ATE meaningless;
+KITTI drift uniformly enormous at every window → wrong from t0, the day-5
+"exploded init" signature, not accumulated drift). Tracking after the bogus
+init was locally smooth — the damage was entirely in the init window.
+
+Conclusion sharpened from Day 6: it is not the *sharpness* of the reversals —
+**any vertical velocity zero-crossings during the init window break the
+gravity/velocity SFM init** in this regime. The smooth sinusoid had a zero
+crossing every second. `--excite` stays in `fly_circuit.py` as a documented
+negative flag (default off); the production Scenario E profile is the
+corridor-proven plain step-start.
+
+Bonus finding: with the diverged estimate, loop_fusion produced **0 DBoW
+candidates** over the full lap — to be re-assessed on a sane run (the tiled
+texture is a perceptual-aliasing risk for appearance-based loop detection;
+the colour signage is the intended disambiguator).
+
+## 6. Results — Scenario E (filled in after the iteration-2 eval pass)
 
 *pending*
 
-## 6. Repo / deliverable hygiene — ✅
+## 7. Repo / deliverable hygiene — ✅
 
 * `third_party/VINS-Fusion-ROS2` was **gitignored** → a fresh clone could not
   build the VIO. Now vendored in-repo (largest file 58 MB DBoW vocab, under

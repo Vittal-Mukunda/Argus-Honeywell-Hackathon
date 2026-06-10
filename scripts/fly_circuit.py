@@ -12,13 +12,14 @@ GT feedback steers the VEHICLE only; the VIO under test never sees GT.
 Geometry must match generate_tunnel_circuit.py: straights y=0 / y=2R for
 x in [0, L]; semicircular caps radius R about (0, R) and (L, R); CCW.
 
-Optional --excite prepends a 6 s smooth vertical-sinusoid + slow-forward
-preamble (3 full periods, C1-continuous, ends at vz=0) to enrich gravity /
-accel-bias observability during VINS initialisation — the Day-6 pre-roll
-experiment failed on SHARP reversals; this one has none.
+--excite (6 s smooth vertical-sinusoid preamble) is a DOCUMENTED NEGATIVE
+(day-7 log): even C1-smooth vertical velocity zero-crossings during the init
+window corrupt the VINS gravity init (first pose ~12 km out, runaway tilt).
+Kept behind the flag for reproducibility of the experiment; default is the
+corridor-proven plain step-start.
 
 Run with the ROS env sourced (rclpy + system python, NOT the eval venv):
-  python3 scripts/fly_circuit.py --laps 1 --speed 0.8 --excite
+  python3 scripts/fly_circuit.py --laps 1 --speed 0.8
 """
 
 import argparse

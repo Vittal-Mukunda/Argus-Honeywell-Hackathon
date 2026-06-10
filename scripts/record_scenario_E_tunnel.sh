@@ -8,14 +8,18 @@
 # measured. No stops, no reversals, no in-place yaw anywhere in the profile.
 #
 # Usage:  bash scripts/record_scenario_E_tunnel.sh [BAG_DIR]
-# Env: LAPS(1) SPEED(0.8) EXCITE(1) SETTLE_S(14) EXTRA_S(40)
+# Env: LAPS(1) SPEED(0.8) EXCITE(0) SETTLE_S(14) EXTRA_S(40)
+#
+# EXCITE=1 is a DOCUMENTED NEGATIVE (day-7): the smooth vertical-sinusoid
+# preamble's velocity zero-crossings corrupt VINS gravity init (first pose
+# ~12 km out). Production profile is the corridor-proven plain step-start.
 set -uo pipefail
 
 WS=/home/vittal/argus
 BAG="${1:-$WS/data/bags/scenario_E_tunnel}"
 LAPS="${LAPS:-1}"
 SPEED="${SPEED:-0.8}"
-EXCITE="${EXCITE:-1}"
+EXCITE="${EXCITE:-0}"
 SETTLE_S="${SETTLE_S:-14}"
 EXTRA_S="${EXTRA_S:-40}"   # recorder margin beyond the estimated flight time
 LOG="$WS/data/bags/_record_E.log"
