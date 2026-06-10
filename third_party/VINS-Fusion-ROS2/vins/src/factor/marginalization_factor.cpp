@@ -83,19 +83,25 @@ MarginalizationInfo::~MarginalizationInfo()
     
     for (auto it = parameter_block_data.begin(); it != parameter_block_data.end(); ++it)
     {
-        delete it->second;
+        delete[] it->second;          // allocated as new double[size] in marginalize()
         it->second = nullptr;
     }
-    
+
     for (int i = 0; i < (int)factors.size(); i++)
     {
 
         delete[] factors[i]->raw_jacobians;
         factors[i]->raw_jacobians = nullptr;
-        
+
         delete factors[i]->cost_function;
         factors[i]->cost_function = nullptr;
 
+        // ARGUS day-7 leak fix: the port nulled the pointer WITHOUT freeing the
+        // ResidualBlockInfo itself (upstream VINS-Fusion deletes it). Each
+        // object owns the per-block Eigen jacobians + residuals, and a new
+        // MarginalizationInfo is built EVERY processed frame -> ~3.6 MB leaked
+        // per frame, OOM-killing the estimator ~60% into a 200 m bag.
+        delete factors[i];
         factors[i] = nullptr;
     }
 }
