@@ -6,6 +6,8 @@
 #   docker/demo.sh --avoid    # AUTONOMOUS: argus_nav flies the drone itself — dense stereo +
 #                             #   3D-LiDAR fusion + log-odds map + reactive avoidance, VIO pose
 #                             #   (GPS-free). No scripted path; it senses and steers around obstacles.
+#   docker/demo.sh --tunnel   # SCENARIO E: one live 202.8 m lap of the tunnel circuit with
+#                             #   VIO + loop closure running — the 200 m drift-gate course.
 #
 # Opens four windows on your display, all rendering through the NVIDIA RTX 4050:
 #   * Gazebo          — chase-cam following the drone down the lit corridor
@@ -34,9 +36,11 @@ IMAGE="${IMAGE:-argus:humble}"
 NAME="${NAME:-argus}"
 FLY=1
 AVOID=0
+TUNNEL=0
 case "${1:-}" in
   --no-fly) FLY=0 ;;
   --avoid)  AVOID=1 ;;
+  --tunnel) TUNNEL=1 ;;   # Scenario E: 202.8 m tunnel circuit, VIO+loop live
 esac
 cd "$REPO"
 
@@ -61,8 +65,10 @@ docker run -d --name "$NAME" --gpus all \
 dexec() { docker exec    "$NAME" bash -lc "source /opt/ros/humble/setup.bash; source install/setup.bash; $*"; }
 dbg()   { docker exec -d "$NAME" bash -lc "source /opt/ros/humble/setup.bash; source install/setup.bash; $*"; }
 
-echo "[demo] starting sim server (headless, always-on)…"
-dbg 'ros2 launch argus_bringup argus_sim.launch.py headless:=true > /tmp/sim.log 2>&1'
+WORLD=warehouse_corridor
+[ "$TUNNEL" -eq 1 ] && WORLD=tunnel_circuit
+echo "[demo] starting sim server (headless, always-on, world=$WORLD)…"
+dbg "ros2 launch argus_bringup argus_sim.launch.py headless:=true world:=$WORLD > /tmp/sim.log 2>&1"
 echo -n "[demo] waiting for sensor stream"
 for i in $(seq 1 40); do
   if dexec 'timeout 2 ros2 topic hz /argus/imu 2>/dev/null | grep -qm1 "average rate"'; then echo " ok"; break; fi
@@ -107,6 +113,11 @@ if [ "$AVOID" -eq 1 ]; then
   # autonomous flight (and all four windows) running.
   trap 'echo; echo "[demo] detached — flight continues. stop everything with: docker rm -f '"$NAME"'"; exit 0' INT
   dexec 'ros2 topic echo --field data /argus/nav/status'
+elif [ "$TUNNEL" -eq 1 ]; then
+  echo "[demo] FLYING one 202.8 m lap of the tunnel circuit (~4.5 min) — VIO + loop"
+  echo "       closure run LIVE; the lap ends back at the start for the loop snap…"
+  dexec 'python3 scripts/fly_circuit.py --laps 1 --speed 0.8 --excite'
+  echo "[demo] lap done. Trajectory + loop-corrected path remain in RViz."
 elif [ "$FLY" -eq 1 ]; then
   echo "[demo] FLYING the corridor (~25 m, ~50 s) — watch Gazebo + RViz build the map live…"
   dexec 'ros2 run argus_bringup drive_drone --pattern forward --speed 0.5 --duration 50 --ramp 4 --ros-args -p use_sim_time:=true'
