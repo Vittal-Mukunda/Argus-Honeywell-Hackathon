@@ -2589,6 +2589,76 @@
       </link>
     </model>
 
+    <model name="initpillar0">
+      <static>true</static>
+      <pose>4.000 2.000 1.100 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>2.2</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>2.200</length></cylinder></geometry>
+          <material><ambient>0.33 0.34 0.37 1</ambient><diffuse>0.48 0.49 0.53 1</diffuse><specular>0.3 0.3 0.3 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="initcrate1a">
+      <static>true</static>
+      <pose>6.500 -2.000 0.350 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.700 0.700 0.700</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.700 0.700 0.700</size></box></geometry>
+          <material><ambient>0.07 0.16 0.42 1</ambient><diffuse>0.12 0.28 0.70 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="initcrate1b">
+      <static>true</static>
+      <pose>6.600 -1.850 0.950 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.500 0.500 0.500</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.500 0.500 0.500</size></box></geometry>
+          <material><ambient>0.45 0.07 0.07 1</ambient><diffuse>0.78 0.13 0.13 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="initpillar2">
+      <static>true</static>
+      <pose>9.000 2.000 1.100 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>2.2</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>2.200</length></cylinder></geometry>
+          <material><ambient>0.33 0.34 0.37 1</ambient><diffuse>0.48 0.49 0.53 1</diffuse><specular>0.3 0.3 0.3 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="initcrate3a">
+      <static>true</static>
+      <pose>11.500 -2.000 0.350 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.700 0.700 0.700</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.700 0.700 0.700</size></box></geometry>
+          <material><ambient>0.06 0.35 0.12 1</ambient><diffuse>0.10 0.55 0.20 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="initcrate3b">
+      <static>true</static>
+      <pose>11.600 -1.850 0.950 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.500 0.500 0.500</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.500 0.500 0.500</size></box></geometry>
+          <material><ambient>0.40 0.28 0.14 1</ambient><diffuse>0.62 0.44 0.22 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="initpillar4">
+      <static>true</static>
+      <pose>14.000 2.000 1.100 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.18</radius><length>2.2</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.18</radius><length>2.200</length></cylinder></geometry>
+          <material><ambient>0.33 0.34 0.37 1</ambient><diffuse>0.48 0.49 0.53 1</diffuse><specular>0.3 0.3 0.3 1</specular></material></visual>
+      </link>
+    </model>
+
     <model name="hazard0">
       <static>true</static>
       <pose>68.000 0.000 0.013 0 0 0.0000</pose>

@@ -213,6 +213,29 @@ def build():
         parts.append(box(f"dash{k}", x, y, 0.012, 0.8, 0.12, 0.02,
                          DASH_M, yaw=th, collision=False))
 
+    # ---- init garden: near-field 3D structure through the VINS init window ----
+    # The corridor world inits at ~1.3 deg tilt with obstacles/racking giving
+    # close-range parallax; bare tunnel walls alone initialised at 13-26 deg
+    # (day-7 iterations 3-4). These pillars/crates sit at |y| 1.8-2.2 m — clear
+    # of the |y|<=1.0 m flight lane — covering the first ~14 m of the lap.
+    PILLAR = mat("0.33 0.34 0.37 1", "0.48 0.49 0.53 1", "0.3 0.3 0.3 1", rough=0.4, metal=0.6)
+    CRATE_C = [
+        mat("0.40 0.28 0.14 1", "0.62 0.44 0.22 1", rough=0.95),
+        mat("0.07 0.16 0.42 1", "0.12 0.28 0.70 1", "0.3 0.3 0.4 1", rough=0.3),
+        mat("0.45 0.07 0.07 1", "0.78 0.13 0.13 1", rough=0.5),
+        mat("0.06 0.35 0.12 1", "0.10 0.55 0.20 1", rough=0.6),
+    ]
+    for k, (gx, side) in enumerate(((4.0, +1), (6.5, -1), (9.0, +1), (11.5, -1), (14.0, +1))):
+        gy = side * 2.0
+        if k % 2 == 0:
+            parts.append(cyl(f"initpillar{k}", gx, gy, 1.1, 0.18, 2.2,
+                             PILLAR, collision=True))
+        else:
+            parts.append(box(f"initcrate{k}a", gx, gy, 0.35, 0.7, 0.7, 0.7,
+                             CRATE_C[k % 4]))
+            parts.append(box(f"initcrate{k}b", gx + 0.1, gy - side * 0.15, 0.95,
+                             0.5, 0.5, 0.5, CRATE_C[(k + 1) % 4]))
+
     # ---- hazard stripes across the lane at each end-cap entry/exit ----
     for k, s in enumerate((L - 2.0, L + math.pi * R + 2.0,
                            2 * L + math.pi * R - 2.0, PERIM - 2.0)):
