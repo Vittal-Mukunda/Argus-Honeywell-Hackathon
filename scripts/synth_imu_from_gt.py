@@ -60,7 +60,10 @@ def main(src: str, dst: str) -> int:
                       m.pose.orientation.z, m.pose.orientation.w])
     t = np.asarray(t)
     p = np.asarray(p)
-    keep = np.concatenate(([True], np.diff(t) > 1e-9))   # drop stamp duplicates
+    # keep a strictly-increasing subsequence (recorded stream has duplicate and
+    # occasionally out-of-order header stamps)
+    run_max = np.maximum.accumulate(np.concatenate(([-np.inf], t[:-1])))
+    keep = t > run_max + 1e-9
     t, p = t[keep], p[keep]
     q = [qq for qq, k in zip(q, keep) if k]
     dt = float(np.median(np.diff(t)))
