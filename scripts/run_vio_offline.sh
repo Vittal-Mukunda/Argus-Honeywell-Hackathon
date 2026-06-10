@@ -46,6 +46,15 @@ if pgrep -f "rqt_image_vie[w]|rviz[2]" >/dev/null 2>&1; then
   sleep 2
 fi
 
+# glibc tuning (day-7): Ceres' per-solve small-allocation churn fragments the
+# malloc arenas — RSS ratchets ~3.6 MB per processed frame (count-based,
+# image-size-independent; heap-internal, not mmap'd) until the 14 GB host
+# OOM-kills vins_node ~60% into a 207 m bag. Single arena + low mmap
+# threshold + aggressive trim lets the allocator return solver memory.
+export MALLOC_ARENA_MAX=1
+export MALLOC_MMAP_THRESHOLD_=131072
+export MALLOC_TRIM_THRESHOLD_=8388608
+
 echo "[vio] starting VINS-Fusion (argus_vio, eval config)..."
 ros2 launch argus_vio argus_vio.launch.py config:="$EVAL_CFG" >"$LOG" 2>&1 &
 VINS_PID=$!
