@@ -36,8 +36,18 @@ if [ ! -d "$SRC_BAG" ]; then
 fi
 rm -rf "$EVAL_BAG"
 
-echo "[vio] starting VINS-Fusion (argus_vio)..."
-ros2 launch argus_vio argus_vio.launch.py >"$LOG" 2>&1 &
+# Day-7 hardening: eval config (show_track: 0 — the per-frame track image
+# leaks in the port) and no GUI spectators (reliable subscribers on heavy
+# topics force DDS retention inside vins_node -> OOM on long bags).
+EVAL_CFG="$WS/install/argus_vio/share/argus_vio/config/argus_stereo_imu_eval_config.yaml"
+if pgrep -f "rqt_image_vie[w]|rviz[2]" >/dev/null 2>&1; then
+  echo "[vio] WARNING: killing attached GUI viewers (they OOM vins_node on long replays)" >&2
+  for p in $(pgrep -f "rqt_image_vie[w]|rviz[2]"); do kill -9 "$p" 2>/dev/null || true; done
+  sleep 2
+fi
+
+echo "[vio] starting VINS-Fusion (argus_vio, eval config)..."
+ros2 launch argus_vio argus_vio.launch.py config:="$EVAL_CFG" >"$LOG" 2>&1 &
 VINS_PID=$!
 sleep "$SETTLE_S"
 
