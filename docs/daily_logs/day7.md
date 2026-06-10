@@ -150,11 +150,33 @@ loop_fusion's `optimize pose graph` log line is the optimiser thread's
 **periodic tick** (fires with zero loop edges); the accepted-loop indicator is
 `detect loop with`. `run_vio_loop_offline.sh` now counts only the latter.
 
-## 8. Results — Scenario E (iteration 4: step-start, RTF-0.5 world)
+## 8. ❌→✅ vins_node OOM via cumulative Path topics (iteration 4)
+
+Step-start fixed half the tilt (26° → ~13°, XY still clean through the first
+end-cap: y = 20.2 vs GT 20.0 on the return straight) — and then **vins_node
+was kernel-OOM-killed at 8.2 GB anon RSS** ~150 sim-s into the replay.
+
+Mechanism: `nav_msgs/Path` on `/argus/vio/path` (and base_path /
+loop_closures) is **cumulative** — every message carries the entire history,
+so total bytes grow quadratically. Reliable subscribers (the eval recorder
+*and* the RViz viewer attached for the live demo) force the DDS writer inside
+vins_node to retain those samples → unbounded anonymous memory in the
+estimator process. Iteration 1 survived the same bag length only because no
+RViz was attached. Day-5 hit the recorder-side version of this and trimmed
+the SuperPoint script; the C1 loop script still carried the Path topics.
+
+Fixes: both offline eval scripts now record **only** gt + odom_optimized
+(+ odom_loop); no `/clock` (run_eval.py uses header stamps); RViz is not
+attached to eval replays. Iteration-4 also showed the tilt persists with
+bare walls, motivating the v2 world's **init garden** (five pillar/crate
+clusters at |y| = 2 m over the first 14 m — the obstacle-rich corridor inits
+at ~1.3°; bare tunnel walls gave 13–26°).
+
+## 9. Results — Scenario E (iteration 5: v2 init garden, step-start, trimmed recorder)
 
 *pending*
 
-## 9. Repo / deliverable hygiene — ✅
+## 10. Repo / deliverable hygiene — ✅
 
 * `third_party/VINS-Fusion-ROS2` was **gitignored** → a fresh clone could not
   build the VIO. Now vendored in-repo (largest file 58 MB DBoW vocab, under
