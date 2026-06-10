@@ -65,12 +65,13 @@ sleep 3
 pkill -9 -f "vins_node" 2>/dev/null || true
 pkill -9 -f "loop_fusion_node" 2>/dev/null || true
 
-# Loop-closure stats from loop_fusion's log: "detect loop with" = a DBoW
-# candidate; "optimize pose graph" = an ACCEPTED loop (passed findConnection's
-# PnP-RANSAC geometric check) that ran the 4-DoF pose-graph correction.
+# Loop-closure stats from loop_fusion's log: "detect loop with" = an ACCEPTED
+# loop edge (DBoW candidate that passed findConnection's PnP-RANSAC geometric
+# check). NOTE (day-7): "optimize pose graph" is the optimiser thread's
+# PERIODIC tick in this ROS2 port — it fires with zero loop edges and must
+# not be counted as a correction.
 DET=$(grep -c "detect loop with" "$LOG" 2>/dev/null || echo 0)
-OPT=$(grep -c "optimize pose graph" "$LOG" 2>/dev/null || echo 0)
-echo "[loop] DBoW loop candidates: $DET ; accepted pose-graph corrections: $OPT (see $LOG)"
+echo "[loop] accepted loop closures (detect loop with): $DET (see $LOG)"
 
 if [ -d "$EVAL_BAG" ]; then
   echo "[loop] DONE. eval bag -> $EVAL_BAG"

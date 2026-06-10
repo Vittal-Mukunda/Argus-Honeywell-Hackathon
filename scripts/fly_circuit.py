@@ -127,9 +127,14 @@ class CircuitFlyer(Node):
             vx = 0.3 * v * math.sin(math.pi / 2 * min(t / 3.0, 1.0))
             cmd.linear.z = 0.22 * math.sin(2 * math.pi * 0.5 * t)
         else:
+            # HARD step to cruise speed (day-6/day-7: ramped starts starve the
+            # VINS gravity init -> Z-ramp tilt; step-starts init reliably).
             tr = t - t_ex
-            ramp = math.sin(math.pi / 2 * min(tr / 4.0, 1.0))      # 4 s C1 ramp
-            vx = (0.3 * v + (v - 0.3 * v) * ramp) if self.a.excite else v * ramp
+            if self.a.excite:
+                ramp = math.sin(math.pi / 2 * min(tr / 4.0, 1.0))
+                vx = 0.3 * v + (v - 0.3 * v) * ramp
+            else:
+                vx = v
             cmd.linear.z = self._clamp(0.8 * (self.a.alt - z), -0.3, 0.3)
 
         remain = self.goal - self.dist
