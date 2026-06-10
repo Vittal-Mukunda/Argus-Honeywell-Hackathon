@@ -75,18 +75,22 @@ The ARGUS system is organized into five functional pillars, each implemented as 
 The following 11 topics constitute the frozen parameter bridge contract between Gazebo and the ROS 2 pipeline:
 
 ```
-/argus/cam0/image        sensor_msgs/Image         30 Hz   Left stereo camera (1280×720, mono8)
-/argus/cam0/camera_info  sensor_msgs/CameraInfo    30 Hz   Left intrinsics (fx=fy=640, cx=640, cy=360)
-/argus/cam1/image        sensor_msgs/Image         30 Hz   Right stereo camera (0.12 m baseline)
-/argus/cam1/camera_info  sensor_msgs/CameraInfo    30 Hz   Right intrinsics (P[3] = -76.8, patched)
+/argus/cam0/image_raw    sensor_msgs/Image         15 Hz   Left stereo camera (1280×720, rgb8)
+/argus/cam0/camera_info  sensor_msgs/CameraInfo    15 Hz   Left intrinsics (fx=fy=640, cx=640, cy=360)
+/argus/cam1/image_raw    sensor_msgs/Image         15 Hz   Right stereo camera (0.12 m baseline)
+/argus/cam1/camera_info  sensor_msgs/CameraInfo    15 Hz   Right intrinsics (P[3] = -76.8, patched)
 /argus/imu               sensor_msgs/Imu          250 Hz   6-DOF IMU (acc + gyro)
 /argus/ground_truth/pose geometry_msgs/PoseStamped 250 Hz   Simulator ground truth (evaluation only)
 /argus/cmd_vel           geometry_msgs/Twist        —       Velocity command input (body FLU)
 /argus/lidar/points      sensor_msgs/PointCloud2   10 Hz   3D LiDAR point cloud
-/argus/rangefinder       sensor_msgs/LaserScan     30 Hz   Downward-facing rangefinder
+/argus/rangefinder       sensor_msgs/LaserScan     20 Hz   Downward-facing rangefinder
 /clock                   rosgraph_msgs/Clock       sim     Simulation clock (use_sim_time=true)
 /argus/clock             rosgraph_msgs/Clock       sim     Duplicate clock for VINS compatibility
 ```
+
+*Camera rate is 15 Hz by design (Day-6 determinism contract: single-threaded VINS
+processes every frame with `freq: 10`; 15 Hz is ample for the 0.8 m/s flight
+envelope and keeps the sim at RTF ≈ 0.9).*
 
 ### 2.2 Custom Message Types
 
@@ -122,10 +126,10 @@ argus_msgs/UncertaintyMap
 |-----------|-------|
 | **Simulator** | Gazebo Harmonic (gz-sim 8) |
 | **Physics engine** | dartsim @ 250 Hz |
-| **World** | `warehouse_corridor.sdf` — 30 m × 5 m × 3 m indoor corridor |
+| **Worlds** | `warehouse_corridor.sdf` — 30 × 5 × 3 m corridor; `tunnel_circuit.sdf` — 202.8 m closed-circuit tunnel (§3.4) |
 | **Drone model** | `argus_drone` — kinematic quadrotor with sensor payload |
 | **Stereo baseline** | 0.12 m (cam0 → cam1) |
-| **Image resolution** | 1280 × 720 px @ 30 Hz |
+| **Image resolution** | 1280 × 720 px @ 15 Hz (rgb8) |
 | **Camera intrinsics** | fx = fy = 640.0, cx = 640.0, cy = 360.0 (pinhole, zero distortion) |
 | **IMU rate** | 250 Hz (acc noise: 0.002 m/s², gyro noise: 1.7×10⁻⁴ rad/s) |
 | **LiDAR** | 3D point cloud @ 10 Hz |
@@ -146,7 +150,34 @@ The warehouse corridor is divided into three functional zones for systematic eva
        ← Drone start (0,0,1)                          Goal (23.5,0,1) →
 ```
 
-### 3.3 Known Contract Deviations
+### 3.3 Scenario E World — 202.8 m Tunnel Circuit
+
+The DP7 specification gates drift **over 200 m**; the corridor is 30 m. The
+`tunnel_circuit` world provides the literal spec distance as one continuous
+GPS-free flight: a stadium-shaped service tunnel — two 70 m straights joined
+by two r = 10 m semicircular end-caps (perimeter 2L + 2πr = **202.83 m**),
+cross-section 6 × 3.5 m.
+
+The world geometry encodes the VIO lessons from the corridor campaign:
+
+- **Segmented wall panels** (5 m straights, 15° arc chords) re-tile the
+  contract `detail.png` checker+speckle texture per panel — an SDF box maps
+  its albedo once per face, so single long wall boxes stretch the texture into
+  invisibility; segmentation gives dense trackable detail everywhere
+- **Arch ribs every ~10 m** and **colour signage every ~12.7 m**: near-field
+  parallax for stereo triangulation plus locally distinctive loop-closure
+  landmarks
+- **End-caps are flown, not turned**: at 0.8 m/s the semicircle is
+  wz = v/R = 0.08 rad/s of yaw *while translating* — always-positive parallax
+  (the in-place U-turn divergence mode cannot occur on this course)
+- **Closed circuit**: the lap ends back at the spawn with ~4 m of overrun, so
+  the DBoW pose graph closes the loop exactly where drift is measured
+
+Select it with `world:=tunnel_circuit`; the drone spawn (1.5, 0, 1.0) lies on
+the first straight. Both worlds are procedurally generated
+(`worlds/generate_*.py`) — the `.sdf` files are build artifacts of the source.
+
+### 3.4 Known Contract Deviations
 
 | # | Deviation | Reason |
 |---|-----------|--------|
@@ -362,10 +393,11 @@ All evaluations use the [evo](https://github.com/MichaelGrupp/evo) trajectory ev
 
 | Scenario | Path | Distance | Condition | Acceptance Criterion |
 |----------|------|----------|-----------|---------------------|
-| **A (Easy)** | Straight forward, all zones | 23.5 m | Fully textured | ATE drift < 1.5% |
+| **A (Easy)** | Straight forward, all zones | 23.5 m | Fully textured corridor | ATE drift < 1.5% |
 | **B (Hard)** | Zone B isolation | 10 m | Low-texture walls | SuperPoint ≥ 20% improvement |
 | **C (Loop)** | 6-leg shuttle (3 round trips) | 92.7 m | Multi-leg traverse | ≥ 1 loop closure detected |
 | **D (Lights Off)** | Forward with Zone B blackout | 23.5 m | Mid-flight darkness | Status reaches LOST; recovery activations > 0 |
+| **E (200 m gate)** | One continuous tunnel-circuit lap | **206.8 m** | Closed-loop tunnel, curves included | ATE drift < 1.5% **at the full spec distance** |
 
 ### 7.3 Ablation Grid
 
@@ -479,14 +511,18 @@ The health monitor correctly detects the blackout (status transitions to LOST), 
 
 | Requirement | Version |
 |-------------|---------|
-| Ubuntu | 22.04 LTS (Jammy) |
-| ROS 2 | Humble Hawksbill |
+| Host OS | Any Linux with Docker + NVIDIA Container Toolkit (verified on Ubuntu 26.04); native install requires Ubuntu 22.04 (see `MIGRATE_SETUP.md`) |
+| ROS 2 | Humble Hawksbill (inside the container) |
 | Gazebo | Harmonic (gz-sim 8) |
 | Ceres Solver | 2.1.0 (from source) |
 | CUDA | 12.x (for SuperPoint GPU inference) |
 | ONNX Runtime | GPU build (for SuperPoint) |
-| Python | 3.10+ |
+| Python | 3.10+ (container) / 3.12+ host eval venv |
 | RMW | CycloneDDS |
+
+> **The Docker path is canonical**: the repo bind-mounts at `/home/vittal/argus`
+> inside the container, which is the path the workspace's configs expect — so a
+> clone at any host location runs unmodified.
 
 ### 9.2 Build from Source
 
@@ -514,7 +550,9 @@ cd docker
 ./build_image.sh
 
 # Run the full demo
-./demo.sh
+./demo.sh             # corridor flight + live VIO mapping (4 windows)
+./demo.sh --avoid     # autonomous sense-and-avoid (argus_nav flies itself)
+./demo.sh --tunnel    # Scenario E: live 202.8 m tunnel lap with VIO + loop closure
 ```
 
 The Docker container includes:
@@ -573,6 +611,16 @@ python scripts/compare_c1_c2.py
 # Analyze Scenario D (lights-off)
 python scripts/analyze_scenario_D.py
 
+# Scenario E — the 200 m gate, end to end (record → VIO+loop replay → eval)
+bash scripts/record_scenario_E_tunnel.sh                      # in the container
+bash scripts/run_vio_loop_offline.sh \
+    data/bags/scenario_E_tunnel data/bags/vio_eval_E          # in the container
+python scripts/run_eval.py --bag data/bags/vio_eval_E \
+    --run-id E_tunnel_loop --vio-topic /argus/vio/odom_loop \
+    --skip-start-m 2.0                                        # host eval venv
+python scripts/make_scenarioE_figures.py \
+    --eval-dir data/eval/E_tunnel_loop --raw-dir data/eval/E_tunnel_raw
+
 # Health monitor self-test (requires ROS 2 environment)
 source /opt/ros/humble/setup.bash && source install/setup.bash
 python3 scripts/_health_selftest.py
@@ -623,7 +671,9 @@ argus/
 │   │       └── reactive_avoider.py   # Potential-field autonomous navigation
 │   ├── argus_sim/            # Gazebo world generation
 │   │   └── worlds/
-│   │       └── generate_world.py     # Procedural warehouse corridor
+│   │       ├── generate_world.py           # Procedural warehouse corridor
+│   │       ├── generate_tunnel_circuit.py  # Scenario E: 202.8 m tunnel circuit
+│   │       └── detail.png                  # Contract PBR feature texture
 │   ├── argus_superpoint/     # Learned feature extraction (Pillar 2, ablation C2)
 │   │   └── argus_superpoint/
 │   │       └── superpoint_node.py    # ONNX Runtime SuperPoint (CUDA EP)
@@ -641,6 +691,9 @@ argus/
 │   ├── run_eval.py           # evo-based ATE/RPE/KITTI trajectory evaluation
 │   ├── run_ablation.py       # CONFIG × SCENARIO ablation grid
 │   ├── build_dashboard.py    # Self-contained HTML dashboard generator
+│   ├── fly_circuit.py        # Scenario E GT-feedback circuit path follower
+│   ├── record_scenario_E_tunnel.sh  # Scenario E sensor-bag recorder
+│   ├── make_scenarioE_figures.py    # Scenario E publication figures
 │   ├── compare_c1_c2.py      # C1 (KLT) vs C2 (SuperPoint) comparison
 │   ├── analyze_scenario_D.py # Lights-off health monitor analysis
 │   └── _health_selftest.py   # Standalone health monitor self-test
