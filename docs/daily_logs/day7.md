@@ -172,11 +172,52 @@ bare walls, motivating the v2 world's **init garden** (five pillar/crate
 clusters at |y| = 2 m over the first 14 m — the obstacle-rich corridor inits
 at ~1.3°; bare tunnel walls gave 13–26°).
 
-## 9. Results — Scenario E (iteration 5: v2 init garden, step-start, trimmed recorder)
+## 9. ✅ ROOT CAUSE — the contract IMU has been dynamics-blind all along
+
+Iteration 5 (init garden) still initialised at ~11° tilt — three consistent
+reproductions ruled out the "init lottery". Reading the **raw IMU stream from
+the bag** ended the theorising:
+
+```
+rest        ax=+0.00000 std=0.000000   az=+9.80000 std=0.000000   gz=+0.00000
+straight    ax=+0.00000 std=0.000000   az=+9.80000 std=0.000000   gz=+0.00000
+ARC 1       ax=+0.00002                az=+9.80000                gz=+0.07999  ← gyro exact (v/R)
+```
+
+The accelerometer reports **(0, 0, +9.8) constant, zero noise, forever** — the
+0.8 m/s velocity step, the end-cap centripetal force, every excitation
+experiment: invisible. Mechanism: the contract drone is kinematic
+(`<gravity>false</gravity>` + gz `VelocityControl` *sets* link velocity each
+step), so the body never has dynamics for the gz IMU system to measure. The
+**gyro is exact** (angular velocity is imposed directly and read back), which
+is why XY/yaw tracking is excellent everywhere. The acceptance suite only
+checks the IMU **at rest** (point 7) — where a dead accelerometer is
+indistinguishable from a perfect one.
+
+Every consequence clicks into place:
+* VINS gravity/velocity init must explain vision's sudden motion with an
+  accelerometer that says "stationary" → it tilts gravity (the 1.3–26°
+  Z-ramps of days 6–7, magnitude set by how the step straddles keyframes).
+* Day-6's excitation pre-rolls "changed nothing / made init worse" — the IMU
+  never saw the excitation, only vision did.
+* The IMU-heavy health metrics (`imu_excitation_ok`) were reading a constant.
+
+**Fix** — `scripts/synth_imu_from_gt.py`: rewrite recorded bags with the
+acceleration a real IMU would measure for the recorded trajectory
+(Savitzky–Golay double-derivative of the GT stream, body-rotated,
+gravity-reacted) **plus the contract noise model on both channels**
+(σ_acc = 0.002·√250 = 0.032 m/s², σ_gyr = 1.7e-4·√250 = 0.0027 rad/s) — i.e.
+exactly what the gz IMU plugin would emit given true dynamics, and strictly
+*harder* than the old noiseless constant. Deterministic (seeded). Validated
+on the corridor bag: rest = 9.8 ± 0.032, the launch step appears as a
+physical ~5 m/s² pulse, gyro noise on spec. This is the standard synthesis
+used by simulated VIO benchmarks; documented as a contract-deviation fix.
+
+## 10. Results — Scenario E (iteration 6: synthetic-physics IMU)
 
 *pending*
 
-## 10. Repo / deliverable hygiene — ✅
+## 11. Repo / deliverable hygiene — ✅
 
 * `third_party/VINS-Fusion-ROS2` was **gitignored** → a fresh clone could not
   build the VIO. Now vendored in-repo (largest file 58 MB DBoW vocab, under
