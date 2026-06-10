@@ -32,6 +32,17 @@ if [ ! -d "$SRC_BAG" ]; then
 fi
 rm -rf "$EVAL_BAG"
 
+# Pre-flight (day-7): GUI viewers must NOT be attached during eval replays on
+# RAM-limited hosts. A reliable subscriber on the 5.5 MB/frame image_track (or
+# the cumulative Path topics) forces DDS writer retention inside vins_node ->
+# ~8 GB anon RSS -> kernel OOM kill mid-bag. Watch the live demo instead, or
+# re-attach viewers only to demo.sh sessions.
+if pgrep -f "rqt_image_vie[w]|rviz[2]" >/dev/null 2>&1; then
+  echo "[loop] WARNING: killing attached GUI viewers (rqt/rviz) — they OOM vins_node on long replays" >&2
+  for p in $(pgrep -f "rqt_image_vie[w]|rviz[2]"); do kill -9 "$p" 2>/dev/null || true; done
+  sleep 2
+fi
+
 echo "[loop] starting VINS-Fusion + loop_fusion..."
 ros2 launch argus_vio argus_vio_loop.launch.py >"$LOG" 2>&1 &
 VINS_PID=$!

@@ -213,11 +213,31 @@ on the corridor bag: rest = 9.8 ± 0.032, the launch step appears as a
 physical ~5 m/s² pulse, gyro noise on spec. This is the standard synthesis
 used by simulated VIO benchmarks; documented as a contract-deviation fix.
 
-## 10. Results — Scenario E (iteration 6: synthetic-physics IMU)
+## 10. ❌→✅ One more OOM: the spectator killed the run
+
+The first synth-IMU replay initialised beautifully — **z flat at ~4 cm over
+the first 10 m (≈ 0.13° vs 11–26° before)** — then vins_node was OOM-killed
+again at 8.5 GB, sim t ≈ 154. Solver costs were *flat* (~52 ms median in
+every decile) until a single 19,000 ms catastrophe at the end: not
+degradation — a memory-pressure stall.
+
+The accumulator: an **rqt_image_view left attached to
+`/argus/vio/image_track`** (5.5 MB per stereo overlay frame). Its reliable
+subscription forces the DDS writer inside vins_node to retain frames; over
+~1,500 frames that is ~8 GB inside the estimator process. The viewer had
+been watching across two replays — the same mechanism as the §8 Path-topic
+OOM, through a different heavy topic. (Iteration 4's death had BOTH RViz and
+the recorder attached; trimming the recorder alone was not enough.)
+
+**Rule, now enforced in-script:** `run_vio_loop_offline.sh` pre-flight kills
+any attached rqt/rviz before replaying — GUI viewers belong to `demo.sh`
+sessions, never to eval replays on a 14 GB host.
+
+## 11. Results — Scenario E (iteration 6, attempt 3: clean room)
 
 *pending*
 
-## 11. Repo / deliverable hygiene — ✅
+## 12. Repo / deliverable hygiene — ✅
 
 * `third_party/VINS-Fusion-ROS2` was **gitignored** → a fresh clone could not
   build the VIO. Now vendored in-repo (largest file 58 MB DBoW vocab, under
