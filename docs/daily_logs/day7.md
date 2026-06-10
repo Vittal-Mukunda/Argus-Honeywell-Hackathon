@@ -111,11 +111,34 @@ candidates** over the full lap — to be re-assessed on a sane run (the tiled
 texture is a perceptual-aliasing risk for appearance-based loop detection;
 the colour signage is the intended disambiguator).
 
-## 6. Results — Scenario E (filled in after the iteration-2 eval pass)
+## 6. ❌→✅ Recorder OOM on the 14 GB host (iteration 2) — fixed structurally
+
+Iteration 2 (step-start) never produced a bag: at RTF ~0.9 the 5-topic stereo
+rgb8 stream writes **~80 MB/s**; with the page cache pre-warmed by the 40 min
+iteration-1 replay, writeback stalled, the sim collapsed to RTF ≈ 0.2
+mid-flight, and the recorder was killed at ~16 GB — **no `metadata.yaml`**
+(the same signature as the day-5 shuttle OOM, different mechanism: this host
+has 14 GB RAM, the WSL box had more headroom).
+
+Structural fix, not a retry-and-hope:
+* `tunnel_circuit.sdf` now **self-paces at RTF 0.5** (physics step and all
+  sensor rates unchanged — sim-time data identical; wall disk rate halved).
+* The Scenario E recorder captures **only the 5 topics** the offline VIO +
+  eval pass consumes (`cam0/cam1 image_raw, imu, ground_truth/pose, /clock`).
+* Replay-rate equivalence: bag play paces by *recorded wall spacing*, so
+  `RATE=0.3` on an RTF-0.5 bag delivers frames to VINS at the same wall rate
+  as the proven `RATE=0.15` on an RTF-1.0 bag (≈ 2.25 frames/s).
+* Pipeline scripts now **gate on `metadata.yaml`** before replaying.
+
+Debug rule added to the playbook: a bag directory without `metadata.yaml`
+means the recorder died — check `free -g` and look for the RTF collapse, not
+just the recorder log (it ends mid-sentence).
+
+## 7. Results — Scenario E (filled in after the iteration-3 eval pass)
 
 *pending*
 
-## 7. Repo / deliverable hygiene — ✅
+## 8. Repo / deliverable hygiene — ✅
 
 * `third_party/VINS-Fusion-ROS2` was **gitignored** → a fresh clone could not
   build the VIO. Now vendored in-repo (largest file 58 MB DBoW vocab, under
