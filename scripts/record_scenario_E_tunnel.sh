@@ -52,11 +52,17 @@ if ! ros2 topic list 2>/dev/null | grep -q "/argus/ground_truth/pose"; then
 fi
 
 # RTF-aware recorder window: flight covers LAPS*202.8+4 m at SPEED (sim s);
-# assume RTF >= 0.75 and pad. fly_circuit exits on its own when done.
+# the tunnel world paces itself at RTF 0.5 (recording robustness — see the
+# world file), so wall time ~= sim time / 0.45 with margin. fly_circuit exits
+# on its own when done; the recorder is SIGINTed right after (no hover tail).
 FLIGHT_SIM_S=$(python3 -c "print(int(($LAPS*202.83+4)/$SPEED + 12))")
-REC_S=$(python3 -c "print(int($FLIGHT_SIM_S/0.75 + $EXTRA_S))")
-echo "[recE] recording sensor+GT for up to ${REC_S}s wall -> $BAG"
-ros2 run argus_bringup record_bag -o "$BAG" -d "$REC_S" >>"$LOG" 2>&1 &
+REC_S=$(python3 -c "print(int($FLIGHT_SIM_S/0.45 + $EXTRA_S))")
+# VIO-essential topics only: stereo images dominate the rate; cam_info / lidar /
+# rangefinder / cmd_vel are not consumed by the offline VIO+eval pass.
+echo "[recE] recording 5 VIO topics for up to ${REC_S}s wall -> $BAG"
+timeout -s INT "$REC_S" ros2 bag record -s sqlite3 -o "$BAG" \
+  /argus/cam0/image_raw /argus/cam1/image_raw \
+  /argus/imu /argus/ground_truth/pose /clock >>"$LOG" 2>&1 &
 REC_PID=$!
 sleep 2
 

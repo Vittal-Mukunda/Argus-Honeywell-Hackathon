@@ -16,8 +16,13 @@
 
     <physics name="dartsim_250hz" type="dart">
       <max_step_size>0.004</max_step_size>
-      <real_time_factor>1.0</real_time_factor>
-      <real_time_update_rate>250</real_time_update_rate>
+      <!-- RTF capped at 0.5 ON PURPOSE (recording robustness): the Scenario E
+           sensor bag writes ~80 MB/s of stereo rgb8 at RTF 1.0, which stalls
+           writeback on a 14 GB host, collapses the sim and OOMs the recorder
+           (day-7). Half-pace halves the disk rate; physics step, sensor rates
+           and all sim-time data are IDENTICAL — recording just takes 2x wall. -->
+      <real_time_factor>0.5</real_time_factor>
+      <real_time_update_rate>125</real_time_update_rate>
     </physics>
 
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
