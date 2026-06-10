@@ -43,8 +43,11 @@ if pgrep -f "rqt_image_vie[w]|rviz[2]" >/dev/null 2>&1; then
   sleep 2
 fi
 
-echo "[loop] starting VINS-Fusion + loop_fusion..."
-ros2 launch argus_vio argus_vio_loop.launch.py >"$LOG" 2>&1 &
+# Eval config = production config with show_track: 0 (the per-frame 5.5 MB
+# annotated track image leaks in the port -> OOM on long bags; day-7).
+EVAL_CFG="$WS/install/argus_vio/share/argus_vio/config/argus_stereo_imu_eval_config.yaml"
+echo "[loop] starting VINS-Fusion + loop_fusion (eval config, show_track off)..."
+ros2 launch argus_vio argus_vio_loop.launch.py config:="$EVAL_CFG" >"$LOG" 2>&1 &
 VINS_PID=$!
 sleep "$SETTLE_S"
 
