@@ -134,11 +134,27 @@ Debug rule added to the playbook: a bag directory without `metadata.yaml`
 means the recorder died — check `free -g` and look for the RTF collapse, not
 just the recorder log (it ends mid-sentence).
 
-## 7. Results — Scenario E (filled in after the iteration-3 eval pass)
+## 7. ❌ Ramped cruise start — failed experiment (iteration 3)
+
+Iteration 3 (step "start" still wrapped in a 4 s sine speed ramp) initialised
+with a **~26° pitch tilt**: VIO z climbed 0.49 m per metre travelled while XY
+stayed clean (y error −0.13 m at x = 22). This is the day-6 ramp finding at
+full strength — a soft ramp gives the init window weak, smoothly-varying
+excitation, and the gravity/velocity SFM locks a tilted frame. The corridor's
+proven init regime is a **hard step to cruise speed**; `fly_circuit.py` now
+steps to 0.8 m/s instantly (the gentle end-of-lap brake is kept — it is far
+outside the init window).
+
+Counter clarification while debugging this: in the ROS 2 port,
+loop_fusion's `optimize pose graph` log line is the optimiser thread's
+**periodic tick** (fires with zero loop edges); the accepted-loop indicator is
+`detect loop with`. `run_vio_loop_offline.sh` now counts only the latter.
+
+## 8. Results — Scenario E (iteration 4: step-start, RTF-0.5 world)
 
 *pending*
 
-## 8. Repo / deliverable hygiene — ✅
+## 9. Repo / deliverable hygiene — ✅
 
 * `third_party/VINS-Fusion-ROS2` was **gitignored** → a fresh clone could not
   build the VIO. Now vendored in-repo (largest file 58 MB DBoW vocab, under
@@ -148,3 +164,7 @@ just the recorder log (it ends mid-sentence).
 * Per-package READMEs added to all 7 ROS 2 packages.
 * `data/scenarios/scenario_E_tunnel_200m.yaml` added (reproduction commands
   inline, like A–D).
+* **Fresh-clone build test PASSED**: `git clone` → clean container →
+  `colcon build` = 10/10 packages in 2 min 37 s (stderr only from the usual
+  upstream camera_models/loop_fusion/vins warnings). The clone-and-build
+  deliverable path is verified end to end.
