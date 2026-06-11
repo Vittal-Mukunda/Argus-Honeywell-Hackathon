@@ -11,7 +11,7 @@
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/ROS2-Humble%20Hawksbill-blue?logo=ros&logoColor=white" alt="ROS2 Humble"/></a>
   <a href="#"><img src="https://img.shields.io/badge/Gazebo-Harmonic-orange?logo=gazebo&logoColor=white" alt="Gazebo Harmonic"/></a>
-  <a href="#"><img src="https://img.shields.io/badge/VIO%20Drift-0.734%25%20ATE-brightgreen" alt="VIO Drift"/></a>
+  <a href="#"><img src="https://img.shields.io/badge/VIO%20Drift-0.144%25%20over%20205%20m-brightgreen" alt="VIO Drift"/></a>
   <a href="#"><img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white" alt="Python"/></a>
   <a href="#"><img src="https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus&logoColor=white" alt="C++17"/></a>
   <a href="#"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"/></a>
@@ -38,11 +38,11 @@
 
 ## 1. Abstract
 
-**ARGUS** is a complete ROS 2 autonomous navigation system designed for GNSS-denied indoor environments. The system demonstrates GPS-free self-localization of a simulated quadrotor using **stereo-inertial Visual Inertial Odometry (VIO)** based on VINS-Fusion, achieving **0.734% ATE drift** over a 24 m warehouse corridor traverse — well within the **< 1.5% specification** target. The platform integrates five pillars: (i) a high-fidelity Gazebo Harmonic simulation of a warehouse corridor with stereo cameras and IMU, (ii) real-time stereo-inertial VIO with KLT/Harris and SuperPoint learned feature extraction, (iii) a health monitor with autonomous failure detection and recovery, (iv) dense stereo depth perception with temporal voxel-map fusion and reactive obstacle avoidance, and (v) a reproducible evaluation harness with 4-scenario ablation testing. All components run as ROS 2 nodes with frozen interface contracts, enabling deterministic offline replay and quantitative benchmarking against ground truth extracted from the simulator.
+**ARGUS** is a complete ROS 2 autonomous navigation system designed for GNSS-denied indoor environments. The system demonstrates GPS-free self-localization of a simulated quadrotor using **stereo-inertial Visual Inertial Odometry (VIO)** based on VINS-Fusion, achieving **0.144% final drift** (0.078% ATE) over a **204.8 m tunnel-circuit traverse** — an order of magnitude inside the **< 1.5% over 200 m specification** gate, measured in a deterministic single-threaded replay. The platform integrates five pillars: (i) a high-fidelity Gazebo Harmonic simulation of a warehouse corridor with stereo cameras and IMU, (ii) real-time stereo-inertial VIO with KLT/Harris and SuperPoint learned feature extraction, (iii) a health monitor with autonomous failure detection and recovery, (iv) dense stereo depth perception with temporal voxel-map fusion and reactive obstacle avoidance, and (v) a reproducible evaluation harness with 4-scenario ablation testing. All components run as ROS 2 nodes with frozen interface contracts, enabling deterministic offline replay and quantitative benchmarking against ground truth extracted from the simulator.
 
 **Key Contributions:**
-- End-to-end GPS-free flight in a 30 m simulated warehouse corridor using only stereo cameras and an IMU
-- VIO drift of **0.734% (ATE)** over 24 m — 2× below the 1.5% Honeywell specification
+- End-to-end GPS-free flight in simulated warehouse-corridor and 202.8 m tunnel-circuit worlds using only stereo cameras and an IMU
+- VIO drift of **0.144% over 204.8 m** (final drift; 0.078% ATE) — 10× below the 1.5% Honeywell specification **at the full 200 m spec distance**
 - Standalone VIO health monitor with state machine (NOMINAL → DEGRADED → LOST) and autonomous recovery hold
 - Dense stereo depth mapping with log-odds voxel fusion and free-space ray carving
 - Reactive potential-field obstacle avoidance with no pre-planned paths
@@ -397,7 +397,7 @@ All evaluations use the [evo](https://github.com/MichaelGrupp/evo) trajectory ev
 | **B (Hard)** | Zone B isolation | 10 m | Low-texture walls | SuperPoint ≥ 20% improvement |
 | **C (Loop)** | 6-leg shuttle (3 round trips) | 92.7 m | Multi-leg traverse | ≥ 1 loop closure detected |
 | **D (Lights Off)** | Forward with Zone B blackout | 23.5 m | Mid-flight darkness | Status reaches LOST; recovery activations > 0 |
-| **E (200 m gate)** | One continuous tunnel-circuit lap | **206.8 m** | Closed-loop tunnel, curves included | ATE drift < 1.5% **at the full spec distance** |
+| **E (200 m gate)** | One continuous tunnel-circuit lap | **204.8 m** | Closed-loop tunnel, curves included | Drift < 1.5% **at the full spec distance** |
 
 ### 7.3 Ablation Grid
 
@@ -413,19 +413,53 @@ All evaluations use the [evo](https://github.com/MichaelGrupp/evo) trajectory ev
 
 ## 8. Results
 
-### 8.1 Scenario A — Drift Gate (Primary Metric)
+### 8.1 Scenario E — 200 m Drift Gate (Primary Metric)
+
+<p align="center">
+  <img src="docs/figures/fig_scenarioE_trajectory.png" alt="Scenario E Trajectory" width="700"/>
+</p>
+
+<p align="center"><em>Fig. 5a — Scenario E: VIO trajectory vs ground truth over one continuous 204.8 m lap of the closed tunnel circuit (top-down XY and side XZ views).</em></p>
+
+<p align="center">
+  <img src="docs/figures/fig_scenarioE_drift.png" alt="Scenario E Drift vs Distance" width="700"/>
+</p>
+
+<p align="center"><em>Fig. 5b — Absolute position error vs distance travelled. The VIO error stays an order of magnitude below the 1.5% budget envelope across the full 204.8 m traverse.</em></p>
+
+| Metric | Value | Target | Status |
+|--------|-------|--------|--------|
+| **Path Length** | **204.79 m** | ≥ 200 m | **Full spec distance** |
+| **Final Drift** | **0.294 m (0.144%)** | < 1.5% | **PASS (10× margin)** |
+| **ATE Drift %** | 0.078% | — | — |
+| **ATE RMSE** | 0.160 m | — | — |
+| **ATE Max** | 0.372 m | — | — |
+| **RPE RMSE** | 0.0059 m/m | — | — |
+| **Duration** | 260.3 s | — | — |
+| **Poses Synced** | 3,945 | — | — |
+| **Alignment** | SE(3) Umeyama | — | — |
+
+**KITTI Segment Drift (alignment-free):**
+
+| Segment Length | 5 m | 10 m | 20 m | 50 m | 100 m | Mean (5–100 m) |
+|---------------|-----|------|------|------|-------|----------------|
+| **Drift %** | 0.30% | 0.28% | 0.33% | 0.56% | 0.80% | **0.46%** |
+
+Run protocol: deterministic single-threaded estimator (`multiple_thread: 0`), offline sensor-bag replay at 0.25× with full per-frame compute budget, first 2 m (initialization transient) excluded, evaluated on `/argus/vio/odom_optimized` against simulator ground truth. Metrics: `data/eval/E_tunnel_final/metrics.json`.
+
+### 8.2 Scenario A — Warehouse Corridor Drift
 
 <p align="center">
   <img src="docs/figures/fig_scenarioA_trajectory.png" alt="Scenario A Trajectory" width="700"/>
 </p>
 
-<p align="center"><em>Fig. 5 — Scenario A: VIO trajectory vs ground truth (coloured by APE). Top-down (XY) and side (XZ) views. The near-straight corridor traverse demonstrates stable stereo-inertial tracking.</em></p>
+<p align="center"><em>Fig. 6 — Scenario A: VIO trajectory vs ground truth (coloured by APE). Top-down (XY) and side (XZ) views. The near-straight corridor traverse demonstrates stable stereo-inertial tracking.</em></p>
 
 <p align="center">
   <img src="docs/figures/fig_scenarioA_drift.png" alt="Scenario A Drift vs Distance" width="700"/>
 </p>
 
-<p align="center"><em>Fig. 6 — Absolute position error vs distance travelled. The VIO drift (blue) remains well below the 1.5% budget envelope (red dashed) throughout the 24 m traverse.</em></p>
+<p align="center"><em>Fig. 7 — Absolute position error vs distance travelled. The VIO drift (blue) remains well below the 1.5% budget envelope (red dashed) throughout the 24 m traverse.</em></p>
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
@@ -444,7 +478,7 @@ All evaluations use the [evo](https://github.com/MichaelGrupp/evo) trajectory ev
 |---------------|-----|------|------|------|------|
 | **Drift %** | 2.77% | 2.01% | 1.75% | 1.85% | **2.10%** |
 
-### 8.2 Scenario B — Low-Texture Zone (SuperPoint Evaluation)
+### 8.3 Scenario B — Low-Texture Zone (SuperPoint Evaluation)
 
 | Metric | C1 (KLT) | C2 (SuperPoint) | Delta |
 |--------|----------|----------------|-------|
@@ -455,7 +489,7 @@ All evaluations use the [evo](https://github.com/MichaelGrupp/evo) trajectory ev
 
 SuperPoint achieves comparable ATE drift on the Zone B blank-wall segment, with a **56% reduction in final drift** (1.77% vs 4.46%), indicating better endpoint accuracy in feature-starved conditions.
 
-### 8.3 Scenario C — Loop Closure (Multi-Leg Shuttle)
+### 8.4 Scenario C — Loop Closure (Multi-Leg Shuttle)
 
 | Metric | Before Loop Closure | After Loop Closure | Improvement |
 |--------|--------------------|--------------------|-------------|
@@ -466,13 +500,13 @@ SuperPoint achieves comparable ATE drift on the Zone B blank-wall segment, with 
 
 The 6-leg shuttle pattern (3 round trips over 92.7 m accumulated distance) demonstrates stable long-term VIO tracking with loop closure improving final-pose consistency by 40%.
 
-### 8.4 Scenario D — Lights-Off (Health Monitor Validation)
+### 8.5 Scenario D — Lights-Off (Health Monitor Validation)
 
 <p align="center">
   <img src="docs/figures/fig_health_scenarioD.png" alt="Scenario D Health Timeline" width="780"/>
 </p>
 
-<p align="center"><em>Fig. 7 — Scenario D health timeline: VIO status (NOMINAL/DEGRADED/LOST), ground truth x-position (blue), and recovery-active spans (orange). C3 (recovery ON) engages 4 hold events during the blackout; C1 (recovery OFF) flies blind.</em></p>
+<p align="center"><em>Fig. 8 — Scenario D health timeline: VIO status (NOMINAL/DEGRADED/LOST), ground truth x-position (blue), and recovery-active spans (orange). C3 (recovery ON) engages 4 hold events during the blackout; C1 (recovery OFF) flies blind.</em></p>
 
 | Metric | C3 (Recovery ON) | C1 (Recovery OFF) |
 |--------|-----------------|-------------------|
@@ -487,21 +521,21 @@ The 6-leg shuttle pattern (3 round trips over 92.7 m accumulated distance) demon
 
 The health monitor correctly detects the blackout (status transitions to LOST), and C3 autonomously engages 4 recovery holds during the 64.7 s blackout period. C1 (baseline without recovery) flies blind with zero recovery activations.
 
-### 8.5 Front-End Ablation (C1 vs C2)
+### 8.6 Front-End Ablation (C1 vs C2)
 
 <p align="center">
   <img src="docs/figures/fig_ablation_c1_c2.png" alt="C1 vs C2 Ablation" width="600"/>
 </p>
 
-<p align="center"><em>Fig. 8 — Front-end ablation: ATE drift comparison between C1 (KLT/Harris) and C2 (SuperPoint) across evaluation scenarios.</em></p>
+<p align="center"><em>Fig. 9 — Front-end ablation: ATE drift comparison between C1 (KLT/Harris) and C2 (SuperPoint) across evaluation scenarios.</em></p>
 
-### 8.6 Cross-Scenario Ablation Summary
+### 8.7 Cross-Scenario Ablation Summary
 
 <p align="center">
   <img src="docs/figures/fig_ablation_comparison.png" alt="Ablation Comparison" width="750"/>
 </p>
 
-<p align="center"><em>Fig. 9 — Cross-run ablation: ATE RMSE (left) and drift percentage (right) across all 31 evaluation runs. The 1.5% drift target (black dashed) is the Honeywell specification gate.</em></p>
+<p align="center"><em>Fig. 10 — Cross-run ablation: ATE RMSE (left) and drift percentage (right) across all 31 evaluation runs. The 1.5% drift target (black dashed) is the Honeywell specification gate.</em></p>
 
 ---
 
@@ -717,15 +751,15 @@ argus/
 |---|------------|--------|----------|
 | 1 | **Simulation Setup**: Gazebo/AirSim environment with stereo camera + IMU drone | **Complete** | `argus_sim` + `argus_bringup` (Gazebo Harmonic warehouse corridor, 1280×720 stereo @ 30 Hz, IMU @ 250 Hz) |
 | 2 | **VIO Pipeline**: Real-time ROS 2 node for visual-inertial odometry | **Complete** | `argus_vio` (VINS-Fusion stereo-inertial, Ceres 2.1, KLT + SuperPoint) |
-| 3 | **Performance Report**: Estimated trajectory vs ground truth graphs | **Complete** | 4-scenario evaluation (A/B/C/D), ATE=0.734%, KITTI drift, ablation grid, HTML dashboard |
+| 3 | **Performance Report**: Estimated trajectory vs ground truth graphs | **Complete** | 5-scenario evaluation (A/B/C/D/E), 0.144% drift over 204.8 m, KITTI drift, ablation grid, HTML dashboard |
 | 4 | **Source Code**: Documented ROS 2 workspace with custom VIO node and launch files | **Complete** | 7 ROS 2 packages, frozen contracts, Docker deployment, acceptance suite |
 
 ### Design Consideration Compliance
 
 | Requirement | Specification | Achieved | Details |
 |-------------|--------------|----------|---------|
-| VIO Drift | < 1.5% over 200 m | **0.734% over 24 m** | 2× below target; KITTI mean 2.10% (alignment-free) |
-| Environment | Simulated indoor (tunnel/warehouse) without GPS | **Yes** | 30 m warehouse corridor, all-indoor, no GNSS |
+| VIO Drift | < 1.5% over 200 m | **0.144% over 204.8 m** | 10× below target at the full spec distance; KITTI mean 0.46% (alignment-free) |
+| Environment | Simulated indoor (tunnel/warehouse) without GPS | **Yes** | 202.8 m closed tunnel circuit + 30 m warehouse corridor, all-indoor, no GNSS |
 | Framework | ROS 2 pipeline + Gazebo or AirSim | **Yes** | ROS 2 Humble + Gazebo Harmonic (dartsim physics) |
 
 ---
