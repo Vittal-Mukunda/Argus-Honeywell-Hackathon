@@ -155,7 +155,7 @@ def arc_walls(tag, cx, radius, phi0, z=H / 2):
 
 
 # ----------------------------------------------------------------------- assembly
-def build():
+def build(add_obstacles=True):
     parts = []
 
     # ---- floor + ceiling slabs over the full stadium bounding box ----
@@ -243,6 +243,41 @@ def build():
         parts.append(box(f"hazard{k}", x, y, 0.013, 0.35, 2 * W - 0.4, 0.02,
                          HAZARD, yaw=th, collision=False))
 
+    # ---- DEMO OBSTACLES: navigable hazards in the flight lane -----------------
+    # Static obstacles + narrow passages placed ON THE STRAIGHTS only (never on the
+    # arcs, where the drone is yawing through the cap) and clear of the first ~14 m
+    # VINS init window. Each leaves a passable gap (the tunnel interior is 6 m wide,
+    # |dy| < ~2.7 m to a wall), and collision is ON so the autonomous nav must
+    # genuinely steer around them. Distinct saturated colours = obvious to a judge
+    # AND well-tracked by KLT/stereo. Model prefix `obs_` so the viz layer can pick
+    # them out. Centrelines: straight A at y=0 (x 0..70, heading +x); straight B at
+    # y=20 (x 0..70, heading -x). Regenerate the bare gate tunnel with --clean.
+    if add_obstacles:
+        OBS_CRATE = mat("0.45 0.30 0.05 1", "0.85 0.55 0.08 1", rough=0.9)            # amber
+        OBS_BARREL = mat("0.45 0.07 0.07 1", "0.85 0.12 0.12 1", "0.3 0.3 0.3 1",
+                         rough=0.4, metal=0.5)                                         # red
+        OBS_WALL = mat("0.55 0.45 0.0 1", "0.95 0.78 0.0 1")                           # hazard yellow
+        OBS_BOX = mat("0.06 0.18 0.45 1", "0.10 0.30 0.78 1", "0.3 0.3 0.4 1", rough=0.35)  # blue
+        OBS_GREEN = mat("0.06 0.35 0.12 1", "0.10 0.60 0.20 1", rough=0.6)             # green
+
+        def obs_box(name, x, y, sx, sy, sz, material, yaw=0.0):
+            # sits on the floor: centre at half-height; collision on.
+            return box(name, x, y, sz / 2, sx, sy, sz, material, yaw=yaw, collision=True)
+
+        def obs_barrel(name, x, y, r, h, material):
+            return cyl(name, x, y, h / 2, r, h, material, collision=True)
+
+        # straight A (heading +x), x in [22, 62] -- past init garden, before R cap
+        parts.append(obs_box("obs_A1", 24.0, 0.8, 0.8, 0.8, 1.5, OBS_CRATE))          # -> dodge -y
+        parts.append(obs_box("obs_A2_block", 36.0, 0.3, 0.4, 2.0, 1.6, OBS_WALL))     # partial blockage -> -y
+        parts.append(obs_barrel("obs_A3_left", 50.0, 1.4, 0.4, 2.0, OBS_BARREL))      # narrow passage:
+        parts.append(obs_box("obs_A3_right", 50.0, -1.4, 0.8, 0.8, 1.5, OBS_BOX))     #   ~2 m centre gap
+        parts.append(obs_box("obs_A4", 60.0, -0.9, 0.8, 0.8, 1.5, OBS_GREEN))         # -> dodge +y
+        # straight B (heading -x), y ~ 20, x in [10, 50]
+        parts.append(obs_box("obs_B1", 46.0, 20.9, 0.8, 0.8, 1.5, OBS_CRATE))         # -> dodge to y<20
+        parts.append(obs_barrel("obs_B2", 26.0, 19.1, 0.4, 2.0, OBS_BARREL))          # -> dodge to y>20
+        parts.append(obs_box("obs_B3_block", 12.0, 20.3, 0.4, 1.4, 1.6, OBS_WALL))    # partial blockage (>=2 m gap each side)
+
     body = "\n".join(parts)
 
     # ---- lights: 16 ceiling points along the centreline + directional fill ----
@@ -315,7 +350,13 @@ def build():
 
 
 if __name__ == "__main__":
+    import argparse
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--clean", action="store_true",
+                   help="emit the bare gate tunnel (no demo obstacles in the flight lane)")
+    args = p.parse_args()
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tunnel_circuit.sdf")
     with open(out, "w") as f:
-        f.write(build())
-    print(f"wrote {out}  (perimeter = {PERIM:.2f} m)")
+        f.write(build(add_obstacles=not args.clean))
+    print(f"wrote {out}  (perimeter = {PERIM:.2f} m, "
+          f"obstacles = {'off' if args.clean else 'on'})")

@@ -1,0 +1,139 @@
+# ARGUS :: argus_tunnel.rviz -- the AUTONOMOUS TUNNEL view (docker/demo.sh --tunnel-avoid).
+#
+# The judge-facing digital twin of the 202.8 m tunnel_circuit, all in `world`:
+#   * Occupancy map (/argus/map/points) -- the log-odds, RGB-painted terrain the
+#     drone fuses LIVE from dense stereo as it laps the tunnel (the "live 3D map").
+#   * Intended route (/argus/nav/reference_path) -- the tunnel centreline, grey, so
+#     the green actual course visibly BOWS off it when the drone dodges an obstacle.
+#   * Flight trajectory (/argus/map/path) -- the actual course (green), built by the
+#     mapper from GT pose so it always matches the map.
+#   * Detected obstacles (/argus/nav/detected_obstacles) -- the live in-lane points
+#     the drone is reacting to, highlighted RED: "obstacle detection", visibly.
+#   * Drone (/argus/ground_truth/pose) -- the live drone marker.
+# Camera is framed for the whole stadium (straights x 0..70 / y 0..20, r=10 caps).
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded: true
+    Help Height: 0
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Color: 52; 56; 70
+      Alpha: 0.45
+      Plane Cell Count: 26
+      Cell Size: 5
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Live 3D map (fused terrain)
+      Enabled: true
+      Topic:
+        Value: /argus/map/points
+        Depth: 5
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+      Style: Boxes
+      # Box edge MUST match the mapper's voxel_size (argus_tunnel_nav.launch.py,
+      # 0.20 m): equal-size boxes tile into CONTIGUOUS walls; smaller boxes leave
+      # a gap lattice through every surface.
+      Size (m): 0.2
+      Color Transformer: RGB8
+      Decay Time: 0
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Name: Intended route (centreline)
+      Enabled: true
+      Topic:
+        Value: /argus/nav/reference_path
+        Depth: 5
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+      Color: 145; 150; 162
+      Line Style: Billboards
+      Line Width: 0.07
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Name: Flight trajectory (actual)
+      Enabled: true
+      Topic:
+        Value: /argus/map/path
+        Depth: 5
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+      Color: 0; 255; 110
+      Line Style: Billboards
+      Line Width: 0.18
+      Value: true
+    - Class: rviz_default_plugins/PointCloud2
+      Name: Detected obstacles
+      Enabled: true
+      Topic:
+        Value: /argus/nav/detected_obstacles
+        Depth: 5
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+      Style: Spheres
+      Size (m): 0.42
+      Color Transformer: FlatColor
+      Color: 255; 60; 45
+      Decay Time: 0
+      Value: true
+    - Class: rviz_default_plugins/Pose
+      Name: Drone
+      Enabled: true
+      Topic:
+        Value: /argus/ground_truth/pose
+        Depth: 10
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+      Shape: Arrow
+      Color: 255; 235; 0
+      Shaft Length: 1.0
+      Shaft Radius: 0.18
+      Head Length: 0.4
+      Head Radius: 0.32
+      Value: true
+    - Class: rviz_default_plugins/Marker
+      Name: Mission banner
+      Enabled: true
+      Topic:
+        Value: /argus/nav/banner
+        Depth: 5
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+      Value: true
+  Global Options:
+    Background Color: 8; 10; 16
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/FocusCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      # 3/4 aerial from the SOUTH: the 70 m straights run horizontally, x grows to
+      # the RIGHT, and straight A (the obstacle slalom, y=0) is the NEAR edge -- so
+      # the drone enters bottom-left and the dodges happen closest to the camera.
+      # Pitch 0.9 (vs the old near-top-down 1.2) shows the walls' height + the map's
+      # 3D-ness while keeping the green path's bow off the centreline legible.
+      Distance: 110
+      Focal Point:
+        X: 35
+        Y: 10
+        Z: 1
+      Pitch: 0.9
+      Yaw: 4.7124
+  Value: true
+Window Geometry:
+  Height: 1080
+  Width: 1920
+  Hide Left Dock: true
+  Hide Right Dock: true

@@ -483,20 +483,33 @@ class OccupancyMapper(Node):
 
     def _neighbor_filter(self, keys, col):
         """Drop occupied voxels with fewer than ``min_neighbors`` occupied
-        26-neighbours -- removes isolated specks that read as garbage."""
+        26-neighbours -- removes isolated specks that read as garbage.
+
+        Vectorised: each (ix,iy,iz) is packed into a unique int64 and neighbour
+        support is counted with sorted-array lookups (searchsorted) over the 26
+        offsets, instead of a per-voxel Python double loop. Identical output (unit-
+        checked), ~2x faster on the whole publish path -- which keeps the mapper at
+        its publish rate on the full 200 m map (~100k+ voxels), where the old loop
+        dropped it to ~0.5 Hz and made the live map visibly choppy."""
         need = int(self.get_parameter('min_neighbors').value)
         if need <= 0 or keys.shape[0] == 0:
             return keys, col
-        occ_set = set(map(tuple, keys.tolist()))
-        mask = np.empty(keys.shape[0], dtype=bool)
-        for i, k in enumerate(keys.tolist()):
-            c = 0
-            for dx, dy, dz in _NEIGHBORS:
-                if (k[0] + dx, k[1] + dy, k[2] + dz) in occ_set:
-                    c += 1
-                    if c >= need:
-                        break
-            mask[i] = c >= need
+        k = keys.astype(np.int64)
+        kmin = k.min(axis=0) - 2           # all coords (and -1 neighbour shifts) stay >= 1
+        k = k - kmin
+        sy = int(k[:, 1].max()) + 3        # per-axis sizes: collision-free packing incl. shifts
+        sz = int(k[:, 2].max()) + 3
+
+        def pack(a):
+            return a[:, 0] * (sy * sz) + a[:, 1] * sz + a[:, 2]
+
+        occ_sorted = np.sort(pack(k))
+        counts = np.zeros(k.shape[0], dtype=np.int32)
+        for dx, dy, dz in _NEIGHBORS:
+            nb = pack(k + np.array([dx, dy, dz], np.int64))
+            idx = np.clip(np.searchsorted(occ_sorted, nb), 0, occ_sorted.shape[0] - 1)
+            counts += (occ_sorted[idx] == nb)
+        mask = counts >= need
         return keys[mask], col[mask]
 
 

@@ -2695,5 +2695,85 @@
       </link>
     </model>
 
+    <model name="obs_A1">
+      <static>true</static>
+      <pose>24.000 0.800 0.750 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.800 0.800 1.500</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.800 0.800 1.500</size></box></geometry>
+          <material><ambient>0.45 0.30 0.05 1</ambient><diffuse>0.85 0.55 0.08 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_A2_block">
+      <static>true</static>
+      <pose>36.000 0.300 0.800 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.400 2.000 1.600</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.400 2.000 1.600</size></box></geometry>
+          <material><ambient>0.55 0.45 0.0 1</ambient><diffuse>0.95 0.78 0.0 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_A3_left">
+      <static>true</static>
+      <pose>50.000 1.400 1.000 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.4</radius><length>2.0</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.4</radius><length>2.000</length></cylinder></geometry>
+          <material><ambient>0.45 0.07 0.07 1</ambient><diffuse>0.85 0.12 0.12 1</diffuse><specular>0.3 0.3 0.3 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_A3_right">
+      <static>true</static>
+      <pose>50.000 -1.400 0.750 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.800 0.800 1.500</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.800 0.800 1.500</size></box></geometry>
+          <material><ambient>0.06 0.18 0.45 1</ambient><diffuse>0.10 0.30 0.78 1</diffuse><specular>0.3 0.3 0.4 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_A4">
+      <static>true</static>
+      <pose>60.000 -0.900 0.750 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.800 0.800 1.500</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.800 0.800 1.500</size></box></geometry>
+          <material><ambient>0.06 0.35 0.12 1</ambient><diffuse>0.10 0.60 0.20 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_B1">
+      <static>true</static>
+      <pose>46.000 20.900 0.750 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.800 0.800 1.500</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.800 0.800 1.500</size></box></geometry>
+          <material><ambient>0.45 0.30 0.05 1</ambient><diffuse>0.85 0.55 0.08 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_B2">
+      <static>true</static>
+      <pose>26.000 19.100 1.000 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.4</radius><length>2.0</length></cylinder></geometry></collision>
+        <visual name="vis"><geometry><cylinder><radius>0.4</radius><length>2.000</length></cylinder></geometry>
+          <material><ambient>0.45 0.07 0.07 1</ambient><diffuse>0.85 0.12 0.12 1</diffuse><specular>0.3 0.3 0.3 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obs_B3_block">
+      <static>true</static>
+      <pose>12.000 20.300 0.800 0 0 0.0000</pose>
+      <link name="link">
+        <collision name="col"><geometry><box><size>0.400 1.400 1.600</size></box></geometry></collision>
+        <visual name="vis"><geometry><box><size>0.400 1.400 1.600</size></box></geometry>
+          <material><ambient>0.55 0.45 0.0 1</ambient><diffuse>0.95 0.78 0.0 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
   </world>
 </sdf>

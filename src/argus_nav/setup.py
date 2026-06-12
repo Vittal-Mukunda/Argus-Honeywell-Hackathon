@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'stereo_depth = argus_nav.stereo_depth:main',
             'reactive_avoider = argus_nav.reactive_avoider:main',
+            'circuit_avoider = argus_nav.circuit_avoider:main',
             'occupancy_mapper = argus_nav.occupancy_mapper:main',
         ],
     },
