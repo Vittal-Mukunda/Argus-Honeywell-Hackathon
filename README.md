@@ -38,7 +38,7 @@
 
 ## 1. Abstract
 
-**ARGUS** is a complete ROS 2 autonomous navigation system designed for GNSS-denied indoor environments. The system demonstrates GPS-free self-localization of a simulated quadrotor using **stereo-inertial Visual Inertial Odometry (VIO)** based on VINS-Fusion, achieving **0.144% final drift** (0.078% ATE) over a **204.8 m tunnel-circuit traverse** — an order of magnitude inside the **< 1.5% over 200 m specification** gate, measured in a deterministic single-threaded replay. The platform integrates five pillars: (i) a high-fidelity Gazebo Harmonic simulation of a warehouse corridor with stereo cameras and IMU, (ii) real-time stereo-inertial VIO with KLT/Harris and SuperPoint learned feature extraction, (iii) a health monitor with autonomous failure detection and recovery, (iv) dense stereo depth perception with temporal voxel-map fusion and reactive obstacle avoidance, and (v) a reproducible evaluation harness with 4-scenario ablation testing. All components run as ROS 2 nodes with frozen interface contracts, enabling deterministic offline replay and quantitative benchmarking against ground truth extracted from the simulator.
+**ARGUS** is a complete ROS 2 autonomous navigation system designed for GNSS-denied indoor environments. The system demonstrates GPS-free self-localization of a simulated quadrotor using **stereo-inertial Visual Inertial Odometry (VIO)** based on VINS-Fusion, achieving **0.144% final drift** (0.078% ATE) over a **204.8 m tunnel-circuit traverse** — an order of magnitude inside the **< 1.5% over 200 m specification** gate, measured in a deterministic single-threaded replay. The platform integrates five pillars: (i) a high-fidelity Gazebo Harmonic simulation of a warehouse corridor with stereo cameras and IMU, (ii) real-time stereo-inertial VIO with KLT/Harris and SuperPoint learned feature extraction, (iii) a health monitor with autonomous failure detection and recovery, (iv) dense stereo depth perception with temporal voxel-map fusion and reactive obstacle avoidance, and (v) a reproducible evaluation harness with 5-scenario ablation testing, plus a live autonomous tunnel-inspection demo (reactive sense-and-avoid over a full 202.8 m loop with a real-time mission dashboard). All components run as ROS 2 nodes with frozen interface contracts, enabling deterministic offline replay and quantitative benchmarking against ground truth extracted from the simulator.
 
 **Key Contributions:**
 - End-to-end GPS-free flight in simulated warehouse-corridor and 202.8 m tunnel-circuit worlds using only stereo cameras and an IMU
@@ -46,7 +46,8 @@
 - Standalone VIO health monitor with state machine (NOMINAL → DEGRADED → LOST) and autonomous recovery hold
 - Dense stereo depth mapping with log-odds voxel fusion and free-space ray carving
 - Reactive potential-field obstacle avoidance with no pre-planned paths
-- 4-scenario evaluation suite (easy/hard/loop/lights-off) with evo-based metrics
+- Live autonomous tunnel-loop demo: the `circuit_avoider` flies the full 202.8 m stadium loop while sensing and steering around in-lane obstacles from live stereo + LiDAR, with a real-time log-odds map and a PyQt5 mission dashboard
+- 5-scenario evaluation suite (easy/hard/loop/lights-off/200 m gate) with evo-based metrics
 
 **Target Departments:** CSE, ECE, IT
 
@@ -64,33 +65,41 @@ The ARGUS system is organized into five functional pillars, each implemented as 
 
 | Pillar | Package(s) | Function | Key Topics |
 |--------|-----------|----------|------------|
-| **1. Simulation** | `argus_sim`, `argus_bringup` | Gazebo Harmonic warehouse world, drone model, ros_gz bridge | `/argus/cam{0,1}/*`, `/argus/imu`, `/argus/ground_truth/pose` |
-| **2. VIO Pipeline** | `argus_vio` (VINS-Fusion), `argus_superpoint` | Stereo-inertial odometry, KLT/Harris + SuperPoint, loop closure | `/argus/vio/odom`, `/argus/vio/odom_optimized` |
+| **1. Simulation** | `argus_sim`, `argus_bringup` | Gazebo Harmonic warehouse + tunnel worlds, drone model, full sensor suite, ros_gz bridge | `/argus/cam{0,1}/*`, `/argus/imu`, `/argus/lidar/*`, `/argus/rangefinder`, `/argus/ground_truth/pose` |
+| **2. VIO Pipeline** | `argus_vio` (VINS-Fusion), `argus_superpoint` | Stereo-inertial odometry, KLT/Harris + SuperPoint, loop closure | `/argus/vio/odom`, `/argus/vio/odom_optimized`, `/argus/vio/odom_loop` |
 | **3. Health Monitor** | `argus_health` | VIO failure detection (INIT→NOM→DEG→LOST), recovery hold | `/argus/vio/health`, `/argus/health/recovery_active` |
-| **4. Perception & Nav** | `argus_nav` | Stereo depth (SGBM+WLS), occupancy mapper, reactive avoider | `/argus/depth/*`, `/argus/map/*`, `/argus/cmd_vel` |
-| **5. Evaluation** | Scripts (`run_eval.py`, etc.) | evo-based ATE/RPE/KITTI metrics, ablation grid, dashboard | Offline analysis (no ROS runtime) |
+| **4. Perception & Nav** | `argus_nav` | Stereo depth (SGBM+WLS), log-odds occupancy mapper, reactive avoider (corridor) + circuit avoider (tunnel loop) | `/argus/depth/*`, `/argus/map/*`, `/argus/nav/*`, `/argus/cmd_vel` |
+| **5. Evaluation & Live Telemetry** | Scripts (`run_eval.py`, `argus_dashboard_live.py`, …) | evo-based ATE/RPE/KITTI metrics, ablation grid, HTML dashboard, live PyQt5 mission dashboard | Offline analysis + `/argus/nav/status`, `/argus/nav/detected_obstacles` |
 
 ### 2.1 ROS 2 Topic Contract (Frozen Interface)
 
-The following 11 topics constitute the frozen parameter bridge contract between Gazebo and the ROS 2 pipeline:
+The following topics constitute the frozen `ros_gz` parameter-bridge contract between Gazebo and the ROS 2 pipeline (12 bridge entries + the `camera_info_patch` republisher; authoritative source: `src/argus_bringup/config/argus_bridge.yaml` and `docs/CONTRACT.md`):
 
 ```
-/argus/cam0/image_raw    sensor_msgs/Image         15 Hz   Left stereo camera (1280×720, rgb8)
-/argus/cam0/camera_info  sensor_msgs/CameraInfo    15 Hz   Left intrinsics (fx=fy=640, cx=640, cy=360)
+# --- sensors (Gazebo → ROS) ---
+/argus/cam0/image_raw    sensor_msgs/Image         15 Hz   Left stereo camera (1280×720, rgb8/R8G8B8)
+/argus/cam0/camera_info  sensor_msgs/CameraInfo    15 Hz   Left intrinsics (fx=fy=640, cx=640, cy=360); reference cam, P[3]=0
 /argus/cam1/image_raw    sensor_msgs/Image         15 Hz   Right stereo camera (0.12 m baseline)
-/argus/cam1/camera_info  sensor_msgs/CameraInfo    15 Hz   Right intrinsics (P[3] = -76.8, patched)
-/argus/imu               sensor_msgs/Imu          250 Hz   6-DOF IMU (acc + gyro)
-/argus/ground_truth/pose geometry_msgs/PoseStamped 250 Hz   Simulator ground truth (evaluation only)
-/argus/cmd_vel           geometry_msgs/Twist        —       Velocity command input (body FLU)
-/argus/lidar/points      sensor_msgs/PointCloud2   10 Hz   3D LiDAR point cloud
-/argus/rangefinder       sensor_msgs/LaserScan     20 Hz   Downward-facing rangefinder
+/argus/cam1/camera_info  sensor_msgs/CameraInfo    15 Hz   Right intrinsics (P[3] = -76.8, patched from the gz P[3]=0)
+/argus/imu               sensor_msgs/Imu          250 Hz   6-DOF IMU (linear accel + angular rate), frame imu_link
+/argus/lidar/points      sensor_msgs/PointCloud2   10 Hz   3D GPU LiDAR cloud (16 rings × 360 az, ≤15 m)
+/argus/lidar/scan        sensor_msgs/LaserScan     10 Hz   3D LiDAR mid-ring scan (LaserScan view of the same sensor)
+/argus/rangefinder       sensor_msgs/LaserScan     20 Hz   Single down-beam altimeter (0.10–20 m), GPS-free altitude
+/argus/ground_truth/pose geometry_msgs/PoseStamped 100 Hz  Simulator ground truth (PosePublisher; evaluation + clean digital twin)
+# --- commands (ROS → Gazebo) ---
+/argus/cmd_vel           geometry_msgs/Twist        —       Velocity command input (body FLU: x fwd, y left, z up + yaw)
+# --- time ---
 /clock                   rosgraph_msgs/Clock       sim     Simulation clock (use_sim_time=true)
-/argus/clock             rosgraph_msgs/Clock       sim     Duplicate clock for VINS compatibility
+/argus/clock             rosgraph_msgs/Clock       sim     Duplicate clock for VINS compatibility (deviation #2)
 ```
 
-*Camera rate is 15 Hz by design (Day-6 determinism contract: single-threaded VINS
-processes every frame with `freq: 10`; 15 Hz is ample for the 0.8 m/s flight
-envelope and keeps the sim at RTF ≈ 0.9).*
+*Camera rate is 15 Hz by design (Day-6 determinism contract: the model SDF caps
+the cameras at 15 Hz — reduced from 30 — so the single-threaded VINS processes
+every frame with `freq: 10`; 15 Hz is ample for the 0.8 m/s flight envelope and
+keeps the sim at a usable RTF). Ground-truth pose is published by the model's
+`PosePublisher` at 100 Hz; it is **never** consumed by the VIO under test — only
+by the evaluation harness and, in the live tunnel demo, by the digital-twin map
+and steering (see §6.4). Full per-sensor working is in §3.5.*
 
 ### 2.2 Custom Message Types
 
@@ -124,17 +133,17 @@ argus_msgs/UncertaintyMap
 
 | Parameter | Value |
 |-----------|-------|
-| **Simulator** | Gazebo Harmonic (gz-sim 8) |
-| **Physics engine** | dartsim @ 250 Hz |
-| **Worlds** | `warehouse_corridor.sdf` — 30 × 5 × 3 m corridor; `tunnel_circuit.sdf` — 202.8 m closed-circuit tunnel (§3.4) |
-| **Drone model** | `argus_drone` — kinematic quadrotor with sensor payload |
-| **Stereo baseline** | 0.12 m (cam0 → cam1) |
-| **Image resolution** | 1280 × 720 px @ 15 Hz (rgb8) |
-| **Camera intrinsics** | fx = fy = 640.0, cx = 640.0, cy = 360.0 (pinhole, zero distortion) |
-| **IMU rate** | 250 Hz (acc noise: 0.002 m/s², gyro noise: 1.7×10⁻⁴ rad/s) |
-| **LiDAR** | 3D point cloud @ 10 Hz |
-| **Rangefinder** | Downward-facing @ 30 Hz |
-| **Ground truth** | Pose extracted directly from simulator @ 250 Hz |
+| **Simulator** | Gazebo Harmonic (gz-sim 8), ogre2 render engine |
+| **Physics engine** | dartsim @ 250 Hz (`max_step_size = 0.004 s`) |
+| **Worlds** | `warehouse_corridor.sdf` — 30 × 5 × 3 m corridor; `tunnel_circuit.sdf` — 202.8 m closed-circuit tunnel with navigable in-lane obstacles (§3.3) |
+| **Drone model** | `argus_drone` — kinematic, gravity-disabled quadrotor, holonomic `VelocityControl` (body FLU + yaw), `PosePublisher` ground truth |
+| **Stereo baseline** | 0.12 m (cam0 left at y=+0.06, cam1 right at y=−0.06) |
+| **Image resolution** | 1280 × 720 px @ 15 Hz, R8G8B8 (rgb8), 90° HFOV |
+| **Camera intrinsics** | fx = fy = 640.0, cx = 640.0, cy = 360.0 (pinhole, zero distortion, identity rectification) |
+| **IMU rate** | 250 Hz, 6-DOF (linear accel + angular rate); at rest reads `a_z = +9.8` |
+| **3D LiDAR** | GPU LiDAR @ 10 Hz, 360 azimuth × 16 elevation rays, range ≤ 15 m → PointCloud2 + LaserScan |
+| **Rangefinder** | Single down-pointing beam @ 20 Hz, range 0.10–20 m (GPS-free altitude hold) |
+| **Ground truth** | `PosePublisher` pose @ 100 Hz (topic only — no `world→base_link` TF, deviation #4) |
 
 ### 3.2 Corridor Zone Layout
 
@@ -177,6 +186,18 @@ Select it with `world:=tunnel_circuit`; the drone spawn (1.5, 0, 1.0) lies on
 the first straight. Both worlds are procedurally generated
 (`worlds/generate_*.py`) — the `.sdf` files are build artifacts of the source.
 
+**Navigable in-lane obstacles (live autonomy demo).** `generate_tunnel_circuit.py`
+also seeds eight collidable obstacles **on the straights only** (never on the
+arcs, where the drone is yawing through the cap) and clear of the first ~14 m
+VINS init window: amber crates, a red barrel, hazard-yellow partial blockages,
+a blue box and a green crate, plus one **narrow-passage gap** (barrel + crate
+from opposite walls leaving a ~2 m centre gap). Collision is **on**, so the
+autonomous tunnel nav (§6.4) must genuinely steer around them; each obstacle
+leaves a passable gap (the interior is 6 m wide). The saturated colours are both
+obvious to a judge and well-tracked by KLT/stereo, and every obstacle model is
+prefixed `obs_` so the viz layer can pick it out. Regenerate the bare gate
+tunnel (no obstacles) with `python3 worlds/generate_tunnel_circuit.py --clean`.
+
 ### 3.4 Known Contract Deviations
 
 | # | Deviation | Reason |
@@ -186,6 +207,88 @@ the first straight. Both worlds are procedurally generated
 | 3 | cam1 `P[3]` patched to −76.8 | Gazebo publishes `P[3]=0`; stereo depth requires `P[3] = -fx × baseline` |
 | 4 | No `world→base_link` TF | Ground truth is topic-only; VIO owns the future `odom→base_link` transform |
 | 5 | dartsim physics (not ODE) | ODE removed from Harmonic; dartsim is default and most accurate |
+
+### 3.5 Sensor Suite — Complete Working
+
+The `argus_drone` model (`src/argus_sim/models/argus_drone/model.sdf`) carries
+five distinct sensors plus a ground-truth publisher. Each is a Gazebo sensor
+rendered by ogre2, time-stamped on the simulation clock, and bridged 1:1 to ROS
+2 by `ros_gz_bridge` (§2.1). Below is the full chain — physical mount → Gazebo
+emission → ROS topic → consumer — for every one.
+
+#### 3.5.1 Stereo camera pair (`cam0`, `cam1`)
+- **Mount:** two `camera` sensors on a rigid bar, `cam0_link` at body offset
+  (+0.10, +0.06, 0) (left, reference) and `cam1_link` at (+0.10, −0.06, 0)
+  (right). The 0.12 m lateral separation is the stereo **baseline** — the single
+  most important number for metric depth and for VIO scale observability.
+- **Optics:** 90° horizontal FOV at 1280×720 px ⇒ a pinhole focal length
+  `fx = fy = width / (2·tan(HFOV/2)) = 640 px`, principal point `(cx, cy) =
+  (640, 360)`, **zero distortion**, identity rectification. Pixel format R8G8B8
+  (`rgb8`); the eval pipeline transcodes to `mono8` for VINS where needed.
+- **Rate:** 15 Hz (Day-6 cap, down from 30) so the single-threaded estimator
+  processes every frame deterministically.
+- **Gazebo→ROS:** `/argus/cam{0,1}/image_raw` (`sensor_msgs/Image`) and
+  `/argus/cam{0,1}/camera_info` (`sensor_msgs/CameraInfo`), frame ids
+  `cam0_optical_frame` / `cam1_optical_frame`. Gazebo cannot encode the baseline,
+  so it emits `P[3]=0` on **both** cameras; the `camera_info_patch` node
+  republishes the right camera with `P[3] = −fx·baseline = −76.8` (deviation #3)
+  so stereo depth and VINS reconstruct true metric scale.
+- **Consumers:** VINS-Fusion front-end (feature tracking + triangulation),
+  `stereo_depth` (SGBM+WLS dense depth), SuperPoint front-end (C2), and the
+  onboard feature-track view (`/argus/vio/image_track`).
+
+#### 3.5.2 IMU (`imu_link`)
+- **Mount:** `imu` sensor at the body origin (0, 0, 0) ⇒ the IMU frame coincides
+  with `base_link`.
+- **Working:** 6-DOF — 3-axis linear accelerometer + 3-axis rate gyroscope at
+  **250 Hz**, matching the 250 Hz physics step (an IMU can never out-run the
+  physics rate). At rest it reads `linear_acceleration.z = +9.8` (gravity
+  reaction; gravity norm 9.8, the Gazebo value, is mirrored in the VINS config).
+- **Gazebo→ROS:** `/argus/imu` (`sensor_msgs/Imu`), frame `imu_link`. The VINS
+  config applies EuRoC-calibrated noise/bias densities (accel 0.002 m/s²/√Hz,
+  gyro 1.7×10⁻⁴ rad/s/√Hz).
+- **Consumers:** VINS IMU preintegration (the inertial half of the tightly-coupled
+  estimator) and the health monitor's IMU-excitation gate. *Note:* the kinematic
+  drone's IMU is dynamics-blind on replayed kinematic-drive bags — the eval
+  harness restores IMU physics synthetically (`scripts/synth_imu_from_gt.py`,
+  see `docs/daily_logs/day7.md`).
+
+#### 3.5.3 3D LiDAR (`lidar_link`)
+- **Mount:** a `gpu_lidar` on a short mast above the body, providing GPS-free
+  obstacle sensing that complements stereo where texture is poor.
+- **Working:** 360 azimuth samples × 16 elevation rings, maximum range 15 m, at
+  **10 Hz** — a full 3D spherical sweep each frame.
+- **Gazebo→ROS:** `/argus/lidar/points` (`sensor_msgs/PointCloud2`, the dense 3D
+  cloud) **and** `/argus/lidar/scan` (`sensor_msgs/LaserScan`, the mid-ring slice
+  of the same sensor), frame `lidar_link`.
+- **Consumers:** `occupancy_mapper` (log-odds fusion alongside stereo depth) and
+  the `reactive_avoider` / `circuit_avoider` obstacle field for 360° awareness.
+
+#### 3.5.4 Downward rangefinder (`rangefinder_link`)
+- **Mount:** a single-beam `gpu_lidar` pointing straight down.
+- **Working:** 1×1 ray, range 0.10–20 m, resolution 0.01 m, at **20 Hz** — a
+  height-above-floor altimeter for **GPS-free altitude hold**.
+- **Gazebo→ROS:** `/argus/rangefinder` (`sensor_msgs/LaserScan`).
+- **Consumers:** the altitude PID in `reactive_avoider` (the tunnel
+  `circuit_avoider` holds altitude on the GT z instead).
+
+#### 3.5.5 Ground-truth pose (`PosePublisher`)
+- **Working:** a model `PosePublisher` plugin emits the exact drone pose at
+  **100 Hz** as a **topic** — there is deliberately no `world→base_link` TF
+  (deviation #4) so the VIO can own the future `odom→base_link` estimate.
+- **Gazebo→ROS:** `/argus/ground_truth/pose` (`geometry_msgs/PoseStamped`),
+  `frame_id` = world, `child_frame_id` = `argus_drone`.
+- **Consumers:** the **evaluation harness only** (as the reference trajectory for
+  ATE/RPE/KITTI), and — in the live tunnel demo — the clean digital-twin map and
+  the circuit-avoider steering. **The VIO under test never sees ground truth.**
+
+#### 3.5.6 Actuation (`VelocityControl`)
+The drone is **holonomic and kinematic**: a `VelocityControl` plugin consumes
+`/argus/cmd_vel` (`geometry_msgs/Twist`, body FLU: linear x forward / y left /
+z up + angular z yaw) and moves the model directly, with per-link gravity
+disabled so it hovers and never falls. Heading and lateral position are therefore
+**decoupled** — the trick the `circuit_avoider` exploits to face down the tunnel
+(good VINS parallax) while strafing sideways around an obstacle (§6.4).
 
 ---
 
@@ -374,6 +477,59 @@ v = F_goal_attraction + F_obstacle_repulsion + F_corridor_walls
 | **Speed envelope** | Max 0.8 m/s (project constraint) |
 
 **Sensor fusion**: Stereo depth cloud + 3D LiDAR + downward rangefinder are fused for 360° awareness.
+
+### 6.4 Circuit Avoider — Autonomous Tunnel Loop (Scenario E live demo)
+
+The `reactive_avoider` holds spawn yaw and never turns, so it cannot fly the
+closed tunnel. The `circuit_avoider` node (`circuit_avoider.py`) is its
+Scenario-E counterpart: it flies the full **202.8 m stadium loop** *and* steers
+live around the in-lane obstacles (§3.3). It exploits the drone's holonomic
+actuation to **decouple heading from lateral position**:
+
+| Channel | Control law |
+|---------|-------------|
+| **Yaw** | Follow the tunnel **tangent** heading + arc feed-forward `wz = v/R` through the semicircular end-caps (so the stereo pair stays aimed down the corridor → good VINS parallax) |
+| **Strafe (body +y)** | A potential field = a spring `−k·e` pulling back to the centreline **plus** sector-binned, density-independent obstacle repulsion + a local-minimum escape that slides toward the clearer side |
+| **Forward (body +x)** | Constant cruise (0.8 m/s), braking only near the lap goal or when something sits inside the hard safety radius dead-ahead |
+| **Altitude** | P-controller on GT z (independent of x/y) |
+
+The result is a visible **detect → adjust course → rejoin** arc with **no global
+replanning** — this is reactive *local* avoidance, not a route planner (stated
+honestly in `docs/DEMO_RUNBOOK.md`). Obstacle sensing is **fully live** (stereo
++ LiDAR, gated to the flight altitude band and inside the lane so the tunnel
+walls themselves exert no repulsion). Vehicle steering and the digital-twin map
+read **ground-truth pose**, because centreline-following needs a reliable pose on
+a curving loop where the kinematic drone's dynamics-blind IMU makes live VINS
+drift — the headline of this demo is autonomous obstacle avoidance + live
+mapping, *not* GPS-free localisation (that is the separate, offline-validated
+Scenario E benchmark in §8.1).
+
+**Judge-facing additive topics** (nothing remaps a frozen interface):
+- `/argus/nav/status` (`std_msgs/String`) — human-readable state line (`state`, `explored %`, `dist`, `offset`, `strafe`, `nearest_ahead`, `obs_pts`)
+- `/argus/nav/detected_obstacles` (`PointCloud2`) — the live in-lane obstacle points, transformed to world, so RViz highlights exactly what is sensed
+- `/argus/nav/reference_path` (latched `nav_msgs/Path`) — the tunnel centreline (the "intended route" the green flown path bows off)
+- `/argus/nav/banner` (`visualization_msgs/Marker`) — a large plain-language status banner floating above the stadium (`EXPLORING TUNNEL` → `OBSTACLE DETECTED` → `NAVIGATING TURN` → `MISSION COMPLETE`)
+
+Launched by `argus_tunnel_nav.launch.py`, which runs `stereo_depth` +
+`occupancy_mapper` (scaled to the **full stadium AABB**, 0.20 m voxels, GT-pose
+oriented so the end-cap walls don't smear) + `circuit_avoider`.
+
+### 6.5 Live Mission Dashboard
+
+`scripts/argus_dashboard_live.py` is a self-contained **PyQt5** telemetry window
+(the same Qt that already backs RViz/rqt — no web server, no extra deps) that
+aggregates every real-time signal for a non-technical viewer:
+
+- **Mission state banner** with a plain-language subtitle, pulsing amber while avoiding
+- **Exploration ring gauge** + hero numbers (distance / measured ground speed / flight time)
+- **To-scale stadium minimap** — walls, a glowing flown trail bowing around obstacles, persistent red marks where obstacles were discovered, and a pulsing drone marker (pure QPainter)
+- **Detail cards**: nearest obstacle, live detection count, course correction, position/section, map points fused, coverage, voxel resolution, and a **modelled** battery (clearly labelled *est.* against a 40-min spec — no BMS exists in the kinematic sim)
+- **Sensor health chips** (Camera / LiDAR / IMU / VIO), green when fresh vs. the latest sim time
+
+Pose comes from ground truth (the same source the RViz digital twin renders);
+flight control and obstacle sensing stay live. It is the 4th window of the
+`docker/demo.sh --tunnel-avoid` presentation (§9.3); the full presenter script is
+`docs/DEMO_RUNBOOK.md`.
 
 ---
 
@@ -584,10 +740,17 @@ cd docker
 ./build_image.sh
 
 # Run the full demo
-./demo.sh             # corridor flight + live VIO mapping (4 windows)
-./demo.sh --avoid     # autonomous sense-and-avoid (argus_nav flies itself)
-./demo.sh --tunnel    # Scenario E: live 202.8 m tunnel lap with VIO + loop closure
+./demo.sh                # corridor flight + live VIO mapping (4 windows)
+./demo.sh --avoid        # autonomous sense-and-avoid in the corridor (argus_nav flies itself)
+./demo.sh --tunnel       # Scenario E: live 202.8 m tunnel lap with VIO + loop closure
+./demo.sh --tunnel-avoid # Scenario E + AUTONOMY: a live 202.8 m lap where the drone follows
+                         #   the tunnel AND senses/steers around in-lane obstacles, with the
+                         #   live log-odds map + 4th-window mission dashboard (see DEMO_RUNBOOK.md)
 ```
+
+The flagship judge presentation is `./demo.sh --tunnel-avoid` — four windows
+(RViz digital twin, Gazebo chase-cam, onboard feature-track view, and the live
+PyQt5 mission dashboard). The presenter runbook is **`docs/DEMO_RUNBOOK.md`**.
 
 The Docker container includes:
 - Full ROS 2 Humble + Gazebo Harmonic stack
@@ -699,14 +862,21 @@ argus/
 │   │       └── health_monitor.py     # State machine + recovery logic
 │   ├── argus_msgs/           # Custom message definitions (VIOHealth, UncertaintyMap)
 │   ├── argus_nav/            # Dense perception & reactive navigation (Pillar 4)
-│   │   └── argus_nav/
-│   │       ├── stereo_depth.py       # SGBM + WLS stereo depth pipeline
-│   │       ├── occupancy_mapper.py   # Log-odds voxel fusion with ray carving
-│   │       └── reactive_avoider.py   # Potential-field autonomous navigation
+│   │   ├── argus_nav/
+│   │   │   ├── stereo_depth.py       # SGBM + WLS stereo depth pipeline
+│   │   │   ├── occupancy_mapper.py   # Log-odds voxel fusion with ray carving (vectorised speck filter)
+│   │   │   ├── reactive_avoider.py   # Potential-field autonomous navigation (corridor)
+│   │   │   └── circuit_avoider.py    # Tunnel-loop centreline-follow + reactive lateral dodge
+│   │   ├── launch/
+│   │   │   ├── argus_nav.launch.py            # corridor nav stack
+│   │   │   └── argus_tunnel_nav.launch.py     # tunnel nav stack (full-stadium map bounds)
+│   │   └── rviz/
+│   │       ├── argus_nav.rviz                 # corridor sense-and-avoid view
+│   │       └── argus_tunnel.rviz              # stadium-framed digital-twin view
 │   ├── argus_sim/            # Gazebo world generation
 │   │   └── worlds/
 │   │       ├── generate_world.py           # Procedural warehouse corridor
-│   │       ├── generate_tunnel_circuit.py  # Scenario E: 202.8 m tunnel circuit
+│   │       ├── generate_tunnel_circuit.py  # Scenario E: 202.8 m tunnel circuit (+ in-lane obstacles; --clean for bare gate)
 │   │       └── detail.png                  # Contract PBR feature texture
 │   ├── argus_superpoint/     # Learned feature extraction (Pillar 2, ablation C2)
 │   │   └── argus_superpoint/
@@ -730,6 +900,7 @@ argus/
 │   ├── make_scenarioE_figures.py    # Scenario E publication figures
 │   ├── compare_c1_c2.py      # C1 (KLT) vs C2 (SuperPoint) comparison
 │   ├── analyze_scenario_D.py # Lights-off health monitor analysis
+│   ├── argus_dashboard_live.py # Live PyQt5 mission-telemetry dashboard (4th demo window)
 │   └── _health_selftest.py   # Standalone health monitor self-test
 ├── data/
 │   ├── scenarios/            # Scenario YAML definitions (A–D)
@@ -739,8 +910,11 @@ argus/
 │   ├── build_image.sh
 │   └── demo.sh
 └── docs/
+    ├── CONTRACT.md           # Frozen Day-1 interface contract (topics, frames, intrinsics, deviations)
+    ├── DEMO_RUNBOOK.md       # Judge-facing presenter script for docker/demo.sh --tunnel-avoid
+    ├── daily_logs/           # Day-by-day engineering log (root-cause analyses)
     ├── figures/              # Publication-quality figures
-    └── media/                # Demo GIFs (live docker/demo.sh --avoid capture)
+    └── media/                # Demo GIFs (live docker/demo.sh capture)
 ```
 
 ---
@@ -749,7 +923,7 @@ argus/
 
 | # | Deliverable | Status | Evidence |
 |---|------------|--------|----------|
-| 1 | **Simulation Setup**: Gazebo/AirSim environment with stereo camera + IMU drone | **Complete** | `argus_sim` + `argus_bringup` (Gazebo Harmonic warehouse corridor, 1280×720 stereo @ 30 Hz, IMU @ 250 Hz) |
+| 1 | **Simulation Setup**: Gazebo/AirSim environment with stereo camera + IMU drone | **Complete** | `argus_sim` + `argus_bringup` (Gazebo Harmonic warehouse corridor + 202.8 m tunnel, 1280×720 stereo @ 15 Hz, IMU @ 250 Hz, 3D LiDAR @ 10 Hz, rangefinder @ 20 Hz, GT pose @ 100 Hz) |
 | 2 | **VIO Pipeline**: Real-time ROS 2 node for visual-inertial odometry | **Complete** | `argus_vio` (VINS-Fusion stereo-inertial, Ceres 2.1, KLT + SuperPoint) |
 | 3 | **Performance Report**: Estimated trajectory vs ground truth graphs | **Complete** | 5-scenario evaluation (A/B/C/D/E), 0.144% drift over 204.8 m, KITTI drift, ablation grid, HTML dashboard |
 | 4 | **Source Code**: Documented ROS 2 workspace with custom VIO node and launch files | **Complete** | 7 ROS 2 packages, frozen contracts, Docker deployment, acceptance suite |

@@ -79,9 +79,11 @@ Kinematic stereo + IMU drone (SDF 1.10). Body frame FLU.
 | `cam0_link` | (+0.10, +0.06, 0) | Left camera |
 | `cam1_link` | (+0.10, −0.06, 0) | Right camera |
 | `imu_link`  | (0, 0, 0) | IMU |
+| `lidar_link` | short mast above body | 3D GPU LiDAR (Day-6) |
+| `rangefinder_link` | down-pointing | single-beam altimeter (Day-6) |
 
-Cameras and IMU are attached by fixed joints. The 0.12 m camera separation is
-the stereo **baseline**.
+Cameras, IMU, LiDAR and rangefinder are attached by fixed joints. The 0.12 m
+camera separation is the stereo **baseline**.
 
 ### Kinematic behaviour
 
@@ -94,8 +96,10 @@ stays at 1.0 at rest). A `PosePublisher` (`publish_nested_model_pose=true`,
 
 | Sensor | Spec |
 |--------|------|
-| Stereo cameras | 2 × 1280×720, hfov 90°, 30 Hz, ogre2 |
+| Stereo cameras | 2 × 1280×720, R8G8B8, hfov 90°, **15 Hz** (Day-6 cap, down from the Day-1 30 Hz — keeps single-threaded VINS deterministic at RTF≈1), ogre2 |
 | IMU | 250 Hz, noise-free for Day-1 (at rest reads `linear_acceleration.z = +9.8`) |
+| 3D LiDAR (`gpu_lidar`, Day-6 add) | 360 az × 16 el rays, range ≤ 15 m, 10 Hz, mast-mounted |
+| Rangefinder (`gpu_lidar`, Day-6 add) | single down beam, range 0.10–20 m, 20 Hz (GPS-free altitude) |
 
 ### Intrinsics (both cameras identical, verified)
 
@@ -117,9 +121,11 @@ mapping plus the #2 / #3 fixes.
 
 | gz topic | gz type | Rate |
 |----------|---------|-----:|
-| `/argus/cam0/image_raw` + `/argus/cam0/camera_info` | image / camera_info | 30 Hz |
-| `/argus/cam1/image_raw` + `/argus/cam1/camera_info` | image / camera_info | 30 Hz |
+| `/argus/cam0/image_raw` + `/argus/cam0/camera_info` | image / camera_info | 15 Hz |
+| `/argus/cam1/image_raw` + `/argus/cam1/camera_info` | image / camera_info | 15 Hz |
 | `/argus/imu` | `gz.msgs.IMU` | 250 Hz |
+| `/argus/lidar` (points + scan) | `gz.msgs.PointCloudPacked` / `LaserScan` | 10 Hz |
+| `/argus/rangefinder` | `gz.msgs.LaserScan` | 20 Hz |
 | `/model/argus_drone/pose` | `gz.msgs.Pose` | 100 Hz |
 | `/model/argus_drone/cmd_vel` | `gz.msgs.Twist` (in) | — |
 
@@ -152,9 +158,11 @@ ros_gz_bridge parameter_bridge --ros-args \
   -p config_file:=<install>/argus_bringup/config/argus_bridge.yaml
 ```
 
-Nine bridge entries (all `gz.msgs.*`), plus the `camera_info_patch` node. **The
+Twelve bridge entries (all `gz.msgs.*`), plus the `camera_info_patch` node. **The
 launch starts BOTH** the bridge and the patch — without the patch, the right
-`CameraInfo` keeps `P[3] = 0` and downstream stereo is wrong.
+`CameraInfo` keeps `P[3] = 0` and downstream stereo is wrong. The Day-6 sensor
+additions (`/argus/lidar/points`, `/argus/lidar/scan`, `/argus/rangefinder`)
+are additive — they extend, but do not alter, the Day-1 stereo+IMU contract.
 
 ### GZ → ROS
 
@@ -167,6 +175,9 @@ launch starts BOTH** the bridge and the patch — without the patch, the right
 | `/argus/cam0/camera_info` | `/argus/cam0/camera_info` | `sensor_msgs/CameraInfo` | passthrough, `P[3]=0` |
 | `/argus/cam1/camera_info` | `/argus/cam1/camera_info_gz` → `/argus/cam1/camera_info` | `sensor_msgs/CameraInfo` | republished by `camera_info_patch` with `P[3] = −fx·baseline = −76.8` (dev #3) |
 | `/model/argus_drone/pose` | `/argus/ground_truth/pose` | `geometry_msgs/PoseStamped` | dev #4; `frame_id` = `warehouse_corridor` |
+| `/argus/lidar/points` | `/argus/lidar/points` | `sensor_msgs/PointCloud2` | Day-6 3D LiDAR cloud (frame `lidar_link`) |
+| `/argus/lidar/scan` | `/argus/lidar/scan` | `sensor_msgs/LaserScan` | Day-6 LiDAR mid-ring scan |
+| `/argus/rangefinder` | `/argus/rangefinder` | `sensor_msgs/LaserScan` | Day-6 down-beam altimeter (frame `rangefinder_link`) |
 
 ### ROS → GZ
 
