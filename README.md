@@ -940,7 +940,7 @@ argus/
 
 <p align="center">
   <strong>Vittal Mukunda</strong><br/>
-  <em>Department of Computer Science and Engineering</em><br/>
+  <em>Industrial Engineering and Management</em><br/>
   <a href="mailto:vittal.muku@gmail.com">vittal.muku@gmail.com</a>
 </p>
 
